@@ -72,15 +72,14 @@ st.markdown(
 )
 
 # Encabezado con Logotipo (Buscando el archivo local 'logo.png' en tu repo)
-col_logo, col_titulo = st.column([1, 4])
+# CORREGIDO: Se usa st.columns en plural
+col_logo, col_titulo = st.columns([1, 4])
 
 with col_logo:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=130)
     else:
-        st.markdown(
-            "🛡️ **[Logo pendiente: Sube tu 'logo.png' al repositorio]**"
-        )
+        st.markdown("🛡️ **[Sube tu 'logo.png' al repositorio]**")
 
 with col_titulo:
     st.title("AVM Grupo Integral de Seguridad Privada del Norte")
