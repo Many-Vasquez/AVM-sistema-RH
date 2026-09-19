@@ -1,187 +1,256 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
-from PIL import Image
-import requests
-from io import BytesIO
-import re
 from docx import Document
+from io import BytesIO
+import os
 
-# --- CONFIGURACIÓN DE LA PÁGINA Y LOGO ---
-# Reemplaza esta URL con el enlace directo de tu logo si deseas cambiarlo
-URL_LOGO = "https://drive.google.com/file/d/1ev83sbeISkt451XlJ7jApeNj786lp1ao/view?usp=drive_link" 
+# Configuración de la página
+st.set_page_config(
+    page_title="AVM - Sistema de Recursos Humanos", page_icon="🛡️", layout="wide"
+)
 
-@st.cache_resource
-def load_image_from_url(url):
-    try:
-        response = requests.get(url)
-        return Image.open(BytesIO(response.content))
-    except:
-        return None
+# Aplicar diseño corporativo en Negro y Dorado mediante CSS
+st.markdown(
+    """
+    <style>
+        /* Fondo general de la aplicación */
+        .stApp {
+            background-color: #0e0e0e;
+            color: #f3f3f3;
+        }
+        
+        /* Barra lateral */
+        [data-testid="stSidebar"] {
+            background-color: #161616;
+            border-right: 1px solid #d4af37;
+        }
+        
+        /* Títulos y textos principales */
+        h1, h2, h3, h4, h5, h6, span, label {
+            color: #f3f3f3 !important;
+        }
+        
+        /* Acento dorado para títulos principales */
+        h1 {
+            color: #d4af37 !important;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 10px;
+        }
+        
+        /* Botones personalizados con bordes y acentos dorados */
+        .stButton>button {
+            background-color: #d4af37;
+            color: #0e0e0e;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+        }
+        
+        .stButton>button:hover {
+            background-color: #f3e5ab;
+            color: #000000;
+        }
+        
+        /* Tarjetas de formularios y contenedores */
+        div.stForm {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333333;
+        }
+        
+        /* Campos de texto y selectores */
+        input, select, textarea {
+            background-color: #222222 !important;
+            color: #ffffff !important;
+            border: 1px solid #444444 !important;
+        }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
 
-logo = load_image_from_url(URL_LOGO)
-st.set_page_config(page_title="AVM Seguridad - Gestión de Personal", page_icon=logo if logo else "🛡️", layout="wide")
+# Encabezado con Logotipo (Buscando el archivo local 'logo.png' en tu repo)
+col_logo, col_titulo = st.column([1, 4])
 
-# --- FUNCIONES DE VALIDACIÓN OFICIAL (EXPRESIONES REGULARES MÉXICO) ---
-def validar_curp(curp):
-    patron = r"^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{2}$"
-    return bool(re.match(patron, curp))
-
-def validar_rfc(rfc):
-    # Soporta RFC de persona física (13 caracteres)
-    patron = r"^[A-Z&Ñ]{4}[0-9]{6}[A-Z0-9]{3}$"
-    return bool(re.match(patron, rfc))
-
-def validar_nss(nss):
-    patron = r"^[0-9]{11}$"
-    return bool(re.match(patron, nss))
-
-# --- INICIALIZACIÓN DE LA BASE DE DATOS EN MEMORIA ---
-if 'empleados' not in st.session_state:
-    st.session_state['empleados'] = pd.DataFrame(columns=[
-        "ID", "Nombre Completo", "CURP", "RFC", "NSS", "Dirección", 
-        "Teléfono", "Estado Civil", "Puesto", "Salario Diario", "Fecha de Alta"
-    ])
-
-# --- INTERFAZ VISUAL PRINCIPAL ---
-if logo:
-    col_logo, col_titulo = st.columns([1, 6])
-    with col_logo:
-        st.image(logo, width=120)
-    with col_titulo:
-        st.title("AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE")
-        st.subheader("Sistema Integral de Recursos Humanos y Contratos")
-else:
-    st.title("🛡️ AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE")
-    st.subheader("Sistema Integral de Recursos Humanos y Contratos")
-
-# Menú lateral de navegación
-menu = st.sidebar.selectbox("Menú Principal", ["Dashboard / Empleados", "Nuevo Registro & Contrato"])
-
-# =========================================================================
-# SECCIÓN 1: DASHBOARD Y LISTADO
-# =========================================================================
-if menu == "Dashboard / Empleados":
-    st.markdown("### 📋 Listado de Personal Activo")
-    df = st.session_state['empleados']
-    
-    if not df.empty:
-        st.dataframe(df, use_container_width=True)
-        st.metric("Total de Elementos Registrados", len(df))
+with col_logo:
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=130)
     else:
-        st.info("No hay elementos registrados todavía. Utiliza la sección 'Nuevo Registro & Contrato' para dar de alta al primero.")
+        st.markdown(
+            "🛡️ **[Logo pendiente: Sube tu 'logo.png' al repositorio]**"
+        )
 
-# =========================================================================
-# SECCIÓN 2: NUEVO REGISTRO Y VALIDACIÓN
-# =========================================================================
-elif menu == "Nuevo Registro & Contrato":
-    st.markdown("### ✍️ Alta de Nuevo Elemento y Datos Contractuales")
-    
+with col_titulo:
+    st.title("AVM Grupo Integral de Seguridad Privada del Norte")
+    st.subheader("Sistema de Gestión de Recursos Humanos y Contratos")
+
+# Menú lateral
+menu = st.sidebar.selectbox(
+    "Menú de Navegación",
+    [
+        "Registro de Personal",
+        "Generar Contrato Sujeto a Prueba",
+        "Generar Contrato Tiempo Indeterminado",
+    ],
+)
+
+# Base de datos simulada en memoria de la sesión
+if "empleados" not in st.session_state:
+    st.session_state.empleados = []
+
+if menu == "Registro de Personal":
+    st.header("📝 Registro de Nuevo Elemento / Guardia")
+
     with st.form("form_empleado"):
         col1, col2 = st.columns(2)
-        
-        with col1:
-            # Forzamos texto en mayúsculas automáticamente mediante .upper()
-            nombre = st.text_input("Nombre Completo (Empezando por Apellidos)").upper()
-            curp = st.text_input("CURP (18 caracteres)").upper()
-            rfc = st.text_input("RFC con Homoclave (13 caracteres)").upper()
-            nss = st.text_input("NSS (11 dígitos)").upper()
-            direccion = st.text_input("Dirección Completa (Calle, Núm, Colonia, Municipio)").upper()
-            
-        with col2:
-            telefono = st.text_input("Teléfono de Contacto (10 dígitos)")
-            estado_civil = st.selectbox("Estado Civil", ["SOLTERO(A)", "CASADO(A)", "UNIÓN LIBRE", "DIVORCIADO(A)", "VIUDO(A)"])
-            puesto = st.selectbox("Puesto", ["GUARDIA INTRAMUROS", "SUPERVISOR DE OPERACIONES", "CUSTODIO", "JEFE DE TURNO"])
-            salario_diario = st.number_input("Salario Diario (MXN)", min_value=250.0, value=300.0, step=10.0)
-            fecha_alta = st.date_input("Fecha de Ingreso", datetime.now())
-            
-        tipo_contrato = st.selectbox("Tipo de Contrato a Generar", ["SUJETO A PRUEBA", "TIEMPO DETERMINADO"])
-        
-        submitted = st.form_submit_button("Validar, Guardar y Preparar Contrato")
-        
-        if submitted:
-            # Validaciones estrictas
-            val_c = validar_curp(curp)
-            val_r = validar_rfc(rfc)
-            val_n = validar_nss(nss)
-            
-            if not (val_c and val_r and val_n):
-                st.error("⚠️ Error en las validaciones oficiales:")
-                if not val_c: st.markdown("- **CURP inválida**: Revisa la estructura de 18 caracteres.")
-                if not val_r: st.markdown("- **RFC inválido**: Revisa la estructura de 13 caracteres con homoclave.")
-                if not val_n: st.markdown("- **NSS inválido**: Debe contener exactamente 11 dígitos numéricos.")
-            elif not nombre or not direccion or not telefono:
-                st.warning("⚠️ Todos los campos de texto y dirección son obligatorios.")
-            else:
-                # Simulación de cálculo SBC (Factor mínimo primer año)
-                factor_integracion = 1.0493 
-                sbc = salario_diario * factor_integracion
-                
-                nuevo_registro = pd.DataFrame({
-                    "ID": [len(st.session_state['empleados']) + 1],
-                    "Nombre Completo": [nombre],
-                    "CURP": [curp],
-                    "RFC": [rfc],
-                    "NSS": [nss],
-                    "Dirección": [direccion],
-                    "Teléfono": [telefono],
-                    "Estado Civil": [estado_civil],
-                    "Puesto": [puesto],
-                    "Salario Diario": [f"${salario_diario:,.2f}"],
-                    "Fecha de Alta": [str(fecha_alta)]
-                })
-                
-                st.session_state['empleados'] = pd.concat([st.session_state['empleados'], nuevo_registro], ignore_index=True)
-                st.success("✅ ¡Elemento validado y registrado exitosamente en el sistema!")
-                
-                # Guardamos temporalmente en sesión para la descarga del contrato
-                st.session_state['ultimo_registrado'] = {
-                    "nombre": nombre, "curp": curp, "rfc": rfc, "nss": nss,
-                    "direccion": direccion, "telefono": telefono, "estado_civil": estado_civil,
-                    "puesto": puesto, "salario": f"${salario_diario:,.2f}", "fecha": str(fecha_alta),
-                    "tipo_contrato": tipo_contrato
-                }
 
-    # --- GENERADOR DE CONTRATO WORD AUTOMATIZADO ---
-    if 'ultimo_registrado' in st.session_state:
-        st.markdown("---")
-        st.markdown("### 📄 Generación de Contrato Laboral")
-        elem = st.session_state['ultimo_registrado']
-        
-        st.info(f"Listo para generar contrato por **{elem['tipo_contrato']}** para: **{elem['nombre']}**")
-        
-        if st.button("📥 Descargar Contrato en Formato Word (.docx)"):
-            doc = Document()
-            doc.add_heading("AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE S.A. DE C.V.", level=1)
-            doc.add_heading(f"CONTRATO INDIVIDUAL DE TRABAJO POR {elem['tipo_contrato']}", level=2)
-            
-            doc.add_paragraph(f"Fecha de elaboración: {datetime.now().strftime('%d/%m/%Y')}\n")
-            doc.add_paragraph(f"EL PATRÓN: AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE S.A. DE C.V., representada legalmente.")
-            doc.add_paragraph(f"EL TRABAJADOR:\n"
-                              f"- Nombre: {elem['nombre']}\n"
-                              f"- CURP: {elem['curp']}\n"
-                              f"- RFC: {elem['rfc']}\n"
-                              f"- NSS: {elem['nss']}\n"
-                              f"- Dirección: {elem['direccion']}\n"
-                              f"- Teléfono: {elem['telefono']}\n"
-                              f"- Estado Civil: {elem['estado_civil']}")
-            
-            doc.add_heading("CLÁUSULAS PRINCIPALES:", level=3)
-            doc.add_paragraph(f"PRIMERA.— El trabajador prestará sus servicios desempeñando el puesto de {elem['puesto']}.")
-            doc.add_paragraph(f"SEGUNDA.— El presente contrato se celebra bajo la modalidad de {elem['tipo_contrato']}, de conformidad con la Ley Federal del Trabajo.")
-            doc.add_paragraph(f"TERCERA.— Se pagará al trabajador un salario diario de {elem['salario']}, cubierto en moneda de curso legal.")
-            
-            doc.add_paragraph("\n\n\n____________________________________             ____________________________________")
-            doc.add_paragraph("       POR LA EMPRESA (AVM GRUPO)                      EL TRABAJADOR")
-            
-            # Guardar archivo temporal en memoria
-            file_path = f"Contrato_{elem['nombre'].replace(' ', '_')}.docx"
-            doc.save(file_path)
-            
-            with open(file_path, "rb") as f:
-                st.download_button(
-                    label="💾 Hacer clic aquí para descargar el documento Word",
-                    data=f,
-                    file_name=file_path,
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        with col1:
+            nombre = st.text_input("Nombre Completo del Trabajador")
+            nacionalidad = st.text_input("Nacionalidad", value="Mexicana")
+            sexo = st.selectbox("Sexo", ["Masculino", "Femenino"])
+            fecha_nacimiento = st.text_input(
+                "Fecha de Nacimiento (ej. 15/05/1995)"
+            )
+            estado_civil = st.selectbox(
+                "Estado Civil", ["Soltero/a", "Casado/a", "Viudo/a"]
+            )
+
+        with col2:
+            curp = st.text_input("CURP")
+            rfc = st.text_input("RFC")
+            domicilio = st.text_area("Domicilio Completo")
+            puesto = st.text_input("Puesto", value="GUARDIA DE SEGURIDAD")
+            salario_semanal = st.text_input(
+                "Salario Semanal (ej. $2,103.85)", value="$2,103.85"
+            )
+
+        submitted = st.form_submit_button("Guardar Empleado")
+
+        if submitted:
+            if nombre and curp:
+                nuevo_emp = {
+                    "nombre": nombre,
+                    "nacionalidad": nacionalidad,
+                    "sexo": sexo,
+                    "fecha_nacimiento": fecha_nacimiento,
+                    "estado_civil": estado_civil,
+                    "curp": curp,
+                    "rfc": rfc,
+                    "domicilio": domicilio,
+                    "puesto": puesto,
+                    "salario_semanal": salario_semanal,
+                }
+                st.session_state.empleados.append(nuevo_emp)
+                st.success(
+                    f"¡Guardia {nombre} registrado correctamente en el sistema!"
                 )
+            else:
+                st.error("Por favor ingresa al menos el Nombre y la CURP.")
+
+    if len(st.session_state.empleados) > 0:
+        st.subheader("📋 Personal Registrado Recientemente")
+        df = pd.DataFrame(st.session_state.empleados)
+        st.dataframe(df)
+
+
+elif menu == "Generar Contrato Sujeto a Prueba":
+    st.header("📄 Generador de Contrato - Sujeto a Prueba (30 Días)")
+
+    if not st.session_state.empleados:
+        st.warning(
+            "⚠️ Primero registra un empleado en la sección 'Registro de Personal'."
+        )
+    else:
+        nombres_empleados = [e["nombre"] for e in st.session_state.empleados]
+        emp_seleccionado = st.selectbox(
+            "Selecciona al Trabajador", nombres_empleados
+        )
+        datos = next(
+            e
+            for e in st.session_state.empleados
+            if e["nombre"] == emp_seleccionado
+        )
+
+        if st.button("📥 Descargar Contrato Sujeto a Prueba (Word)"):
+            doc = Document()
+            doc.add_heading(
+                "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA",
+                level=1,
+            )
+
+            texto_prueba = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 39-A, 39-B, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
+
+D E C L A R A C I O N E S:
+I. Declara el PATRÓN:
+a) Ser una persona moral, debidamente constituida conforme a las leyes de la República Mexicana, según consta en la escritura pública número 6,948, pasada ante la fe del Notario Público número 127, con domicilio ubicado en Calle Santa Bárbara número 141, C. Asturias, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juárez, Nuevo León, Registro Federal de Contribuyentes AGI260413CK4 y tener como objeto social, entre otros, la prestación de servicios de seguridad privada, consistentes en la vigilancia, protección y resguardo de bienes muebles e inmuebles, así como de establecimientos comerciales, industriales, habitacionales y de servicios.
+b) Que requiere de personal capacitado para ocupar el puesto de {datos['puesto']}.
+
+II. Declara el TRABAJADOR:
+a) Ser una persona física, de nacionalidad {datos['nacionalidad']}, sexo {datos['sexo']}, fecha de nacimiento {datos['fecha_nacimiento']}, estado civil {datos['estado_civil']}, CURP {datos['curp']} y RFC {datos['rfc']}, con domicilio en {datos['domicilio']}.
+
+C L Á U S U L A S:
+PRIMERA. El presente contrato se celebra por TIEMPO INDETERMINADO, quedando sujeto "EL TRABAJADOR" a un PERIODO DE PRUEBA DE 1 MES (30 DÍAS).
+QUINTA. El PATRÓN pagará al TRABAJADOR un salario ordinario de {datos['salario_semanal']} pesos semanales, más Bonos de Asistencia ($450.00) y Puntualidad ($450.00).
+"""
+            for parrafo in texto_prueba.split("\n\n"):
+                if parrafo.strip():
+                    doc.add_paragraph(parrafo.strip())
+
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
+
+            st.download_button(
+                label="📥 Clic aquí para descargar el Word listo",
+                data=buffer,
+                file_name=f"Contrato_Prueba_{datos['nombre'].replace(' ', '_')}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+
+
+elif menu == "Generar Contrato Tiempo Indeterminado":
+    st.header("📄 Generador de Contrato - Tiempo Indeterminado")
+
+    if not st.session_state.empleados:
+        st.warning(
+            "⚠️ Primero registra un empleado en la sección 'Registro de Personal'."
+        )
+    else:
+        nombres_empleados = [e["nombre"] for e in st.session_state.empleados]
+        emp_seleccionado = st.selectbox(
+            "Selecciona al Trabajador", nombres_empleados
+        )
+        datos = next(
+            e
+            for e in st.session_state.empleados
+            if e["nombre"] == emp_seleccionado
+        )
+
+        if st.button("📥 Descargar Contrato Indeterminado (Word)"):
+            doc = Document()
+            doc.add_heading(
+                "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO",
+                level=1,
+            )
+
+            texto_indet = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA POR EL C. ABNER VELAZQUEZ MORALES (EL "PATRÓN"), Y POR LA OTRA PARTE, {datos['nombre']} (EL “TRABAJADOR”), CONFORME A LAS SIGUIENTES CLÁUSULAS:
+
+PRIMERA. El TRABAJADOR se obliga a prestar sus servicios con el puesto de {datos['puesto']}.
+QUINTO. Salario semanal de {datos['salario_semanal']}, cubriendo bonos de asistencia y puntualidad condicionados al 100% de asistencia.
+"""
+            for parrafo in texto_indet.split("\n\n"):
+                if parrafo.strip():
+                    doc.add_paragraph(parrafo.strip())
+
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
+
+            st.download_button(
+                label="📥 Clic aquí para descargar el Word listo",
+                data=buffer,
+                file_name=f"Contrato_Indeterminado_{datos['nombre'].replace(' ', '_')}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
