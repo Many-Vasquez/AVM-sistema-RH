@@ -160,7 +160,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             precio_unitario = st.number_input(
                 "Precio Unitario Mensual por Guardia ($)",
                 min_value=0.0,
-                value=0,
+                value=100000000,
                 step=100.0,
             )
 
