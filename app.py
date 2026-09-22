@@ -293,7 +293,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
 
         row_cells = table.rows[1].cells
         row_cells[0].text = str(st.session_state.cantidad_guardias)
-        row_cells[1].text = "Guardias Intramuro / Control de Accesos"
+        row_cells[1].text = "Guardias Intramuro/Extramuros- Control de Accesos"
         row_cells[2].text = (
             "Control estricto de acceso peatonal y vehicular "
             "(empleados, contratistas, proveedores y transporte pesado). Turno de 12 horas."
