@@ -73,14 +73,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Encabezado con Logotipo
+# Encabezado con el Logotipo
 col_logo, col_titulo = st.columns([1, 4])
 
 with col_logo:
-    if os.path.exists("logo.png"):
+    if os.path.exists("Imagen1 (1).png"):
+        st.image("Imagen1 (1).png", width=130)
+    elif os.path.exists("logo.png"):
         st.image("logo.png", width=130)
     else:
-        st.markdown("🛡️ **[Sube tu 'logo.png' al repositorio]**")
+        st.markdown("🛡️ **[Sube tu logo al repositorio]**")
 
 with col_titulo:
     st.title("AVM Grupo Integral de Seguridad Privada del Norte")
@@ -93,15 +95,12 @@ st.sidebar.markdown(
     "### 🧭 Administración", unsafe_allow_html=True
 )
 
-# Estado para controlar la vista activa si se usan botones independientes
 if "vista_actual" not in st.session_state:
     st.session_state.vista_actual = "Sistema de Recursos Humanos"
 
-# Botón independiente para el Módulo Comercial / Cotizador
 if st.sidebar.button("📊 Ir a Módulo Comercial (Cotizador)"):
     st.session_state.vista_actual = "Generador de Cotizaciones"
 
-# Menú desplegable tradicional para Recursos Humanos / Contratos
 menu_hr = st.sidebar.selectbox(
     "Módulo de Recursos Humanos",
     [
@@ -111,12 +110,10 @@ menu_hr = st.sidebar.selectbox(
     ],
 )
 
-# Si el usuario usa el selectbox de RRHH, cambiamos la vista a RRHH
 if menu_hr != st.session_state.get("menu_hr_prev", ""):
     st.session_state.vista_actual = "RRHH"
     st.session_state.menu_hr_prev = menu_hr
 
-# Base de datos simulada en memoria
 if "empleados" not in st.session_state:
     st.session_state.empleados = []
 
@@ -160,7 +157,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             st.session_state.cantidad_guardias = cantidad_guardias
             st.session_state.precio_unitario = precio_unitario
 
-    # Generación del documento Word con Marca de Agua Real de Fondo (Estilo Sello Detrás del Texto)
     if st.session_state.get("cotizacion_generada", False):
         subtotal = (
             st.session_state.cantidad_guardias
@@ -171,58 +167,29 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
 
         doc_cot = Document()
 
-        # Márgenes limpios de página
         for section in doc_cot.sections:
             section.top_margin = Inches(1.2)
             section.bottom_margin = Inches(1.2)
             section.left_margin = Inches(1.2)
             section.right_margin = Inches(1.2)
 
-        # INSERCIÓN DE MARCA DE AGUA REAL TIPO SELLO / CONFIDENCIAL EN EL FONDO (CENTRADA Y DETRÁS DEL TEXTO)
-        if os.path.exists("logo.png"):
+        # INSERCIÓN SEGURA DE MARCA DE AGUA EN EL ENCABEZADO
+        logo_path = (
+            "Imagen1 (1).png"
+            if os.path.exists("Imagen1 (1).png")
+            else "logo.png"
+        )
+        if os.path.exists(logo_path):
             header = doc_cot.sections[0].header
             hp = header.paragraphs[0]
             hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
             hrun = hp.add_run()
-            
-            # Insertamos la imagen con un tamaño grande y equilibrado para fondo de hoja
-            inline_shape = hrun.add_picture("logo.png", width=Inches(5.5))
-            
-            # Convertimos la imagen de inline a un elemento flotante absoluto (posicionado en el centro de la página y detrás del texto)
-            r = hrun._r
-            drawing_list = r.xpath('//w:drawing')
-            if drawing_list:
-                drawing = drawing_list[0]
-                inline_elem = drawing.xpath('.//wp:inline')
-                if inline_elem:
-                    inline_node = inline_elem[0]
-                    # Cambiamos de wp:inline a wp:anchor para permitir posicionamiento libre flotante de marca de agua
-                    anchor = OxmlElement('wp:anchor')
-                    anchor.set('simplePos', '0')
-                    anchor.set('relativeHeight', '251658240')
-                    anchor.set('behindDoc', '1') # CLAVE: Detrás del texto (como marca de agua)
-                    anchor.set('locked', '0')
-                    anchor.set('layoutInCell', '1')
-                    anchor.set('allowOverlap', '1')
+            hrun.add_picture(logo_path, width=Inches(5.0))
 
-                    # Copiamos los atributos de tamaño y contenido hijo
-                    for child in inline_node:
-                        anchor.append(child)
-
-                    # Posicionamiento centrado en la página (Horizontal y Vertical relativo a la página)
-                    positionH = parse_xml(r'<wp:positionH relativeFrom="page"><wp:align>center</wp:align></wp:positionH>')
-                    positionV = parse_xml(r'<wp:positionV relativeFrom="page"><wp:align>center</wp:align></wp:positionV>')
-                    anchor.insert(0, positionV)
-                    anchor.insert(0, positionH)
-
-                    drawing.replace(inline_node, anchor)
-
-        # Definir Colores Corporativos
-        COLOR_DORADO = RGBColor(197, 155, 39)  # #C59B27
-        COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)  # #141414
+        COLOR_DORADO = RGBColor(197, 155, 39)
+        COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
         COLOR_GRIS_TEXTO = RGBColor(80, 80, 80)
 
-        # Encabezado corporativo principal
         p_emp = doc_cot.add_paragraph()
         p_emp.paragraph_format.space_after = Pt(2)
         run_emp_1 = p_emp.add_run("AVM GRUPO INTEGRAL ")
@@ -245,7 +212,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         run_dir.font.size = Pt(8.5)
         run_dir.font.color.rgb = COLOR_GRIS_TEXTO
 
-        # Línea divisoria dorada
         p_line = doc_cot.add_paragraph()
         p_line.paragraph_format.space_after = Pt(12)
         r_line = p_line.add_run(
@@ -254,7 +220,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         r_line.font.size = Pt(9)
         r_line.font.color.rgb = COLOR_DORADO
 
-        # Título de Propuesta Económica
         p_prop = doc_cot.add_paragraph()
         p_prop.paragraph_format.space_after = Pt(10)
         run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
@@ -262,18 +227,20 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         run_prop.font.size = Pt(13)
         run_prop.font.color.rgb = COLOR_DORADO
 
-        # Datos del cliente
         p_datos = doc_cot.add_paragraph()
         p_datos.paragraph_format.space_after = Pt(15)
         p_datos.add_run(f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n")
-        p_datos.add_run(f"CLIENTE:                  {st.session_state.empresa_cliente}\n")
-        p_datos.add_run(f"ATENCIÓN:               {st.session_state.contacto_cliente}\n")
+        p_datos.add_run(
+            f"CLIENTE:                  {st.session_state.empresa_cliente}\n"
+        )
+        p_datos.add_run(
+            f"ATENCIÓN:               {st.session_state.contacto_cliente}\n"
+        )
         for run in p_datos.runs:
             run.font.size = Pt(10)
             run.bold = True
             run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Análisis de Situación
         h2_1 = doc_cot.add_heading(level=2)
         h2_1.paragraph_format.space_before = Pt(8)
         h2_1.paragraph_format.space_after = Pt(4)
@@ -288,7 +255,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         p_analisis.runs[0].font.size = Pt(10)
         p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Detalle de Cotización (Tabla)
         h2_2 = doc_cot.add_heading(level=2)
         h2_2.paragraph_format.space_before = Pt(8)
         h2_2.paragraph_format.space_after = Pt(6)
@@ -339,7 +305,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
                     run.font.size = Pt(9)
                     run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Totales
         p_totales = doc_cot.add_paragraph()
         p_totales.paragraph_format.space_before = Pt(8)
         p_totales.paragraph_format.space_after = Pt(12)
@@ -356,7 +321,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
                 run.font.size = Pt(9.5)
                 run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Términos y Condiciones
         h2_3 = doc_cot.add_heading(level=2)
         h2_3.paragraph_format.space_before = Pt(8)
         h2_3.paragraph_format.space_after = Pt(6)
@@ -399,7 +363,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             r_d.font.size = Pt(9.5)
             r_d.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Eslogan final
         p_pie = doc_cot.add_paragraph()
         p_pie.paragraph_format.space_before = Pt(15)
         p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -414,11 +377,9 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         doc_cot.save(buffer_cot)
         buffer_cot.seek(0)
 
-        st.success(
-            "¡Cotización generada con éxito con marca de agua real de hoja (detrás del texto) y diseño ejecutivo!"
-        )
+        st.success("¡Propuesta económica generada con éxito!")
         st.download_button(
-            label="📥 Descargar Propuesta Económica en Word (Marca de Agua Real)",
+            label="📥 Descargar Propuesta Económica en Word",
             data=buffer_cot,
             file_name=f"Cotizacion_AVM_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
