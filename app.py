@@ -173,7 +173,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             section.left_margin = Inches(1.2)
             section.right_margin = Inches(1.2)
 
-        # INSERCIÓN SEGURA DE MARCA DE AGUA EN EL ENCABEZADO
+      # INSERCIÓN CORRECTA DE MARCA DE AGUA FLOTANTE EN EL ENCABEZADO
         logo_path = (
             "Imagen1 (1).png"
             if os.path.exists("Imagen1 (1).png")
@@ -184,7 +184,35 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             hp = header.paragraphs[0]
             hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
             hrun = hp.add_run()
-            hrun.add_picture(logo_path, width=Inches(5.0))
+
+            # Añadir la imagen con tamaño de marca de agua
+            inline_shape = hrun.add_picture(logo_path, width=Inches(4.5))
+
+            # Convertir la imagen en flotante detrás del texto (Marca de agua real)
+            r_element = inline_shape._inline
+            new_element = parse_xml(
+                r"""
+                <wp:anchor xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" 
+                           simplePos="0" relativeHeight="251658240" behindDoc="1" locked="1" layoutInCell="1" allowOverlap="1">
+                    <wp:simplePos x="0" y="0"/>
+                    <wp:positionH relativeFrom="page">
+                        <wp:align>center</wp:align>
+                    </wp:positionH>
+                    <wp:positionV relativeFrom="page">
+                        <wp:align>center</wp:align>
+                    </wp:positionV>
+                    <wp:extent cx="4572000" cy="4572000"/>
+                    <wp:effectExtent l="0" t="0" r="0" b="0"/>
+                    <wp:wrapNone/>
+                    <wp:docPr id="1" name="Marca de Agua AVM"/>
+                    <wp:cNvGraphicFramePr/>
+                </wp:anchor>
+            """
+            )
+            inline_shape._inline.getparent().replace(
+                inline_shape._inline, new_element
+            )
+            new_element.append(r_element.graphic)
 
         COLOR_DORADO = RGBColor(197, 155, 39)
         COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
@@ -192,13 +220,13 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
 
         p_emp = doc_cot.add_paragraph()
         p_emp.paragraph_format.space_after = Pt(2)
-        run_emp_1 = p_emp.add_run("AVM GRUPO INTEGRAL ")
+        run_emp_1 = p_emp.add_run("AVM")
         run_emp_1.bold = True
         run_emp_1.font.size = Pt(15)
         run_emp_1.font.color.rgb = COLOR_NEGRO_SUAVE
 
         run_emp_2 = p_emp.add_run(
-            "DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V.\n"
+            "GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V.\n"
         )
         run_emp_2.bold = True
         run_emp_2.font.size = Pt(15)
