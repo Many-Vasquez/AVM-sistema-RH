@@ -90,7 +90,7 @@ with col_titulo:
 
 # --- MENÚ LATERAL Y BOTONES SEPARADOS ---
 st.sidebar.markdown(
-    "### 🧭 Navegación General", unsafe_allow_html=True
+    "### 🧭 Administración", unsafe_allow_html=True
 )
 
 # Estado para controlar la vista activa si se usan botones independientes
@@ -160,7 +160,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             st.session_state.cantidad_guardias = cantidad_guardias
             st.session_state.precio_unitario = precio_unitario
 
-    # Generación del documento Word con Marca de Agua Real de Fondo y Estilo Dorado/Negro
+    # Generación del documento Word con Marca de Agua Real de Fondo (Estilo Sello Detrás del Texto)
     if st.session_state.get("cotizacion_generada", False):
         subtotal = (
             st.session_state.cantidad_guardias
@@ -178,22 +178,44 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             section.left_margin = Inches(1.2)
             section.right_margin = Inches(1.2)
 
-        # INSERCIÓN DE MARCA DE AGUA REAL EN EL ENCABEZADO (Detrás del texto, centrada y grande)
+        # INSERCIÓN DE MARCA DE AGUA REAL TIPO SELLO / CONFIDENCIAL EN EL FONDO (CENTRADA Y DETRÁS DEL TEXTO)
         if os.path.exists("logo.png"):
             header = doc_cot.sections[0].header
             hp = header.paragraphs[0]
             hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
             hrun = hp.add_run()
-            # Insertamos la imagen dimensionada para que abarque el fondo de la hoja con sutileza
-            inline_shape = hrun.add_picture("logo.png", width=Inches(4.8))
+            
+            # Insertamos la imagen con un tamaño grande y equilibrado para fondo de hoja
+            inline_shape = hrun.add_picture("logo.png", width=Inches(5.5))
+            
+            # Convertimos la imagen de inline a un elemento flotante absoluto (posicionado en el centro de la página y detrás del texto)
+            r = hrun._r
+            drawing_list = r.xpath('//w:drawing')
+            if drawing_list:
+                drawing = drawing_list[0]
+                inline_elem = drawing.xpath('.//wp:inline')
+                if inline_elem:
+                    inline_node = inline_elem[0]
+                    # Cambiamos de wp:inline a wp:anchor para permitir posicionamiento libre flotante de marca de agua
+                    anchor = OxmlElement('wp:anchor')
+                    anchor.set('simplePos', '0')
+                    anchor.set('relativeHeight', '251658240')
+                    anchor.set('behindDoc', '1') # CLAVE: Detrás del texto (como marca de agua)
+                    anchor.set('locked', '0')
+                    anchor.set('layoutInCell', '1')
+                    anchor.set('allowOverlap', '1')
 
-            # Aplicar XML para mover la imagen al fondo (detrás del texto / marca de agua)
-            inline = inline_shape._inline
-            effectExtent = parse_xml(
-                r'<wp:effectExtent %s l="0" t="0" r="0" b="0"/>'
-                % nsdecls("wp")
-            )
-            inline.append(effectExtent)
+                    # Copiamos los atributos de tamaño y contenido hijo
+                    for child in inline_node:
+                        anchor.append(child)
+
+                    # Posicionamiento centrado en la página (Horizontal y Vertical relativo a la página)
+                    positionH = parse_xml(r'<wp:positionH relativeFrom="page"><wp:align>center</wp:align></wp:positionH>')
+                    positionV = parse_xml(r'<wp:positionV relativeFrom="page"><wp:align>center</wp:align></wp:positionV>')
+                    anchor.insert(0, positionV)
+                    anchor.insert(0, positionH)
+
+                    drawing.replace(inline_node, anchor)
 
         # Definir Colores Corporativos
         COLOR_DORADO = RGBColor(197, 155, 39)  # #C59B27
@@ -260,7 +282,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         r_h2_1.font.color.rgb = COLOR_DORADO
 
         p_analisis = doc_cot.add_paragraph(
-            "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal[cite: 10]."
+            "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal."
         )
         p_analisis.paragraph_format.space_after = Pt(12)
         p_analisis.runs[0].font.size = Pt(10)
@@ -345,23 +367,23 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         terminos = [
             (
                 "1. Responsabilidad Civil y Patronal:",
-                "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes[cite: 10].",
+                "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes.",
             ),
             (
                 "2. Garantía de Continuidad:",
-                "Nos comprometemos a mantener la cobertura del servicio al 100%. Sustitución en menos de 90 minutos por personal de retén[cite: 10].",
+                "Nos comprometemos a mantener la cobertura del servicio al 100%. Sustitución en menos de 90 minutos por personal de retén.",
             ),
             (
                 "3. Confidencialidad Rigurosa:",
-                "Todo el personal asignado cuenta con estrictos contratos de confidencialidad para proteger las operaciones del cliente[cite: 10].",
+                "Todo el personal asignado cuenta con estrictos contratos de confidencialidad para proteger las operaciones del cliente.",
             ),
             (
                 "4. Vigencia de la Propuesta:",
-                "La presente cotización tiene una validez de 15 días naturales a partir de su emisión[cite: 10].",
+                "La presente cotización tiene una validez de 15 días naturales a partir de su emisión.",
             ),
             (
                 "5. Condiciones de Pago:",
-                "Facturación mensual liquidable dentro de los primeros 5 días naturales de cada mes[cite: 10].",
+                "Facturación mensual liquidable dentro de los primeros 5 días naturales de cada mes.",
             ),
         ]
 
@@ -393,7 +415,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         buffer_cot.seek(0)
 
         st.success(
-            "¡Cotización generada con éxito con marca de agua real de hoja y diseño ejecutivo!"
+            "¡Cotización generada con éxito con marca de agua real de hoja (detrás del texto) y diseño ejecutivo!"
         )
         st.download_button(
             label="📥 Descargar Propuesta Económica en Word (Marca de Agua Real)",
