@@ -881,7 +881,8 @@ ________________________________--
 """
 
                 for parrafo in texto_indet.split("\n\n"):
-                    parrafo_limpio = parrafo.strip()if parrafo_limpio:
+                    parrafo_limpio = parrafo.strip()
+                    if parrafo_limpio:
                         doc.add_paragraph(parrafo.strip())
 
                 buffer = BytesIO()
