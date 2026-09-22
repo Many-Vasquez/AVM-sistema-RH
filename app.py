@@ -75,12 +75,39 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- INICIALIZACIÓN DE ESTADOS ---
+# --- BASE DE DATOS PERSISTENTE (CSV) ---
+DB_FILE = "personal_avm.csv"
+DB_ASISTENCIA = "asistencias_avm.csv"
+
+
+def cargar_datos_empleados():
+    if os.path.exists(DB_FILE):
+        return pd.read_csv(DB_FILE).to_dict(orient="records")
+    return []
+
+
+def guardar_datos_empleados(lista_empleados):
+    df = pd.DataFrame(lista_empleados)
+    df.to_csv(DB_FILE, index=False)
+
+
+def cargar_datos_asistencias():
+    if os.path.exists(DB_ASISTENCIA):
+        return pd.read_csv(DB_ASISTENCIA).to_dict(orient="records")
+    return []
+
+
+def guardar_datos_asistencias(lista_asistencias):
+    df = pd.DataFrame(lista_asistencias)
+    df.to_csv(DB_ASISTENCIA, index=False)
+
+
+# Inicialización de estados sincronizados con archivos
 if "empleados" not in st.session_state:
-    st.session_state.empleados = []
+    st.session_state.empleados = cargar_datos_empleados()
 
 if "asistencias" not in st.session_state:
-    st.session_state.asistencias = []
+    st.session_state.asistencias = cargar_datos_asistencias()
 
 if "cotizacion_generada" not in st.session_state:
     st.session_state.cotizacion_generada = False
@@ -467,24 +494,28 @@ elif menu == "👥 Registro de Personal":
                     "Salario Semanal": salario_semanal,
                 }
                 st.session_state.empleados.append(nuevo_emp)
+                guardar_datos_empleados(st.session_state.empleados)
                 st.success(
-                    f"¡Guardia {nombre} registrado y guardado exitosamente!"
+                    f"¡Guardia {nombre} registrado y guardado en la base de datos central!"
                 )
             else:
                 st.error("Por favor complete al menos Nombre, CURP y NSS.")
 
+    # Recargar datos frescos del archivo CSV para ver cambios en tiempo real
+    st.session_state.empleados = cargar_datos_empleados()
     if len(st.session_state.empleados) > 0:
-        st.subheader("📋 Plantilla de Personal Registrado")
+        st.subheader("📋 Plantilla de Personal Registrado (Sincronizado)")
         df_personal = pd.DataFrame(st.session_state.empleados)
         st.dataframe(df_personal, use_container_width=True)
 
-# --- 📥 REPORTE DE PERSONAL (EXCEL) ---
+# --- 📥 REPORTE DE PERSONAL (CSV / EXCEL) ---
 elif menu == "📥 Reporte de Personal (Excel)":
-    st.header("📥 Módulo de Reportes de Personal - Excel")
+    st.header("📥 Módulo de Reportes de Personal")
     st.markdown(
         "Genere y descargue el padrón completo del personal activo para auditoría o administración."
     )
 
+    st.session_state.empleados = cargar_datos_empleados()
     if not st.session_state.empleados:
         st.info(
             "ℹ️ No hay registros de personal en este momento. Registre personal en la sección previa."
@@ -493,18 +524,13 @@ elif menu == "📥 Reporte de Personal (Excel)":
         df_excel = pd.DataFrame(st.session_state.empleados)
         st.dataframe(df_excel, use_container_width=True)
 
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            df_excel.to_excel(
-                writer, index=False, sheet_name="Personal_AVM_Activo"
-            )
-        excel_data = output.getvalue()
+        csv_personal = df_excel.to_csv(index=False).encode("utf-8")
 
         st.download_button(
-            label="📊 Descargar Listado de Personal en Excel (.xlsx)",
-            data=excel_data,
-            file_name=f"Padron_Personal_AVM_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            label="📊 Descargar Listado de Personal (Compatible con Excel)",
+            data=csv_personal,
+            file_name=f"Padron_Personal_AVM_{datetime.now().strftime('%Y-%m-%d')}.csv",
+            mime="text/csv",
         )
 
 # --- 👆 CHECADOR BIOMÉTRICO DE HUELLA ---
@@ -514,6 +540,7 @@ elif menu == "👆 Checador Biométrico de Huella":
         "Módulo independiente para registro de huella y cambios de turno en planta."
     )
 
+    st.session_state.empleados = cargar_datos_empleados()
     if not st.session_state.empleados:
         st.warning(
             "⚠️ No hay elementos registrados. Registre personal primero en el módulo de 'Registro de Personal'."
@@ -589,12 +616,14 @@ elif menu == "👆 Checador Biométrico de Huella":
                 }
 
                 st.session_state.asistencias.append(nuevo_registro)
+                guardar_datos_asistencias(st.session_state.asistencias)
                 st.success(
                     f"✅ ¡{tipo_movimiento.upper()} registrada para {datos_emp['Nombre']} a las {hora_str}!"
                 )
 
+    st.session_state.asistencias = cargar_datos_asistencias()
     if len(st.session_state.asistencias) > 0:
-        st.subheader("⚡ Últimos Registros Biométricos")
+        st.subheader("⚡ Últimos Registros Biométricos (Sincronizados)")
         df_asist = pd.DataFrame(st.session_state.asistencias)
         st.dataframe(df_asist, use_container_width=True)
 
@@ -605,6 +634,7 @@ elif menu == "📈 Reportes Métricos de Asistencia":
         "Control gerencial de incidencias, retardos y bonos semanales en tiempo real."
     )
 
+    st.session_state.asistencias = cargar_datos_asistencias()
     if not st.session_state.asistencias:
         st.info("ℹ️ Aún no hay registros en el checador biométrico.")
     else:
@@ -646,6 +676,7 @@ elif menu == "📈 Reportes Métricos de Asistencia":
 elif menu == "📄 Generación de Contratos":
     st.header("📄 Generador de Contratos Laborales en Word")
 
+    st.session_state.empleados = cargar_datos_empleados()
     if not st.session_state.empleados:
         st.warning(
             "⚠️ Primero registre personal en la sección 'Registro de Personal'."
