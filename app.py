@@ -412,6 +412,11 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
                 "5. Condiciones de Pago:",
                 "Facturación mensual liquidable dentro de los primeros 5 días naturales de cada mes.",
             ),
+            
+            (
+                "6. Dias Festivos",
+                "Se cobran el doble del costo por dia.",
+            ),
         ]
 
         for titulo, desc in terminos:
