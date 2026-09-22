@@ -290,7 +290,10 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
 
         p_datos = doc_cot.add_paragraph()
         p_datos.paragraph_format.space_after = Pt(6)
-        p_datos.add_run(f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n")
+        if st.session_state.fecha_cot:
+            p_datos.add_run(
+                f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n"
+            )
         p_datos.add_run(
             f"CLIENTE:                  {st.session_state.empresa_cliente}\n"
         )
@@ -351,7 +354,7 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         row_cells = table.rows[1].cells
         row_cells[0].text = str(st.session_state.cantidad_guardias)
         row_cells[1].text = (
-            "Guardias Intramuros/Extramuros- Control de Accesos"
+            "Guardias Intramuro/Extramuros- Control de Accesos"
         )
         row_cells[2].text = (
             "Control estricto de acceso peatonal y vehicular "
@@ -412,9 +415,8 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
                 "5. Condiciones de Pago:",
                 "Facturación mensual liquidable dentro de los primeros 5 días naturales de cada mes.",
             ),
-            
             (
-                "6. Dias Festivos",
+                "6. Dias Festivos:",
                 "Se cobran el doble del costo por dia.",
             ),
         ]
@@ -455,8 +457,9 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
 
 # --- 👥 REGISTRO DE PERSONAL ---
 elif menu == "👥 Registro de Personal":
-    st.header("📝 Registro de Nuevo Elemento / Guardia")
+    st.header("📝 Registro y Gestión de Personal / Guardias")
 
+    # Sección de Registro Nuevo
     with st.form("form_empleado"):
         col1, col2 = st.columns(2)
 
@@ -485,6 +488,7 @@ elif menu == "👥 Registro de Personal":
 
         if submitted:
             if nombre and curp and nss:
+                st.session_state.empleados = cargar_datos_empleados()
                 nuevo_emp = {
                     "Nombre": nombre,
                     "Nacionalidad": nacionalidad,
@@ -506,14 +510,80 @@ elif menu == "👥 Registro de Personal":
             else:
                 st.error("Por favor complete al menos Nombre, CURP y NSS.")
 
-    # Recargar datos frescos del archivo CSV para ver cambios en tiempo real
+    st.markdown("---")
+    st.subheader("⚙️ Modificar o Eliminar Personal Existente")
+
     st.session_state.empleados = cargar_datos_empleados()
-    if len(st.session_state.empleados) > 0:
-        st.subheader("📋 Plantilla de Personal Registrado (Sincronizado)")
+    if not st.session_state.empleados:
+        st.info("ℹ️ No hay personal registrado actualmente.")
+    else:
+        nombres_registrados = [e["Nombre"] for e in st.session_state.empleados]
+        emp_a_editar = st.selectbox(
+            "Seleccione al Elemento a Gestionar", nombres_registrados
+        )
+
+        datos_actuales = next(
+            e
+            for e in st.session_state.empleados
+            if e["Nombre"] == emp_a_editar
+        )
+
+        col_e1, col_e2 = st.columns(2)
+        with col_e1:
+            nuevo_nombre = st.text_input(
+                "Modificar Nombre", value=datos_actuales["Nombre"]
+            )
+            nuevo_puesto = st.text_input(
+                "Modificar Puesto", value=datos_actuales["Puesto"]
+            )
+            nuevo_nss = st.text_input(
+                "Modificar NSS", value=datos_actuales["NSS"]
+            )
+        with col_e2:
+            nuevo_salario = st.text_input(
+                "Modificar Salario Semanal",
+                value=datos_actuales["Salario Semanal"],
+            )
+            nuevo_domicilio = st.text_area(
+                "Modificar Domicilio", value=datos_actuales["Domicilio"]
+            )
+
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("🔄 Actualizar Datos del Elemento"):
+                for e in st.session_state.empleados:
+                    if e["Nombre"] == emp_a_editar:
+                        e["Nombre"] = nuevo_nombre
+                        e["Puesto"] = nuevo_puesto
+                        e["NSS"] = nuevo_nss
+                        e["Salario Semanal"] = nuevo_salario
+                        e["Domicilio"] = nuevo_domicilio
+                guardar_datos_empleados(st.session_state.empleados)
+                st.success(
+                    f"¡Datos de {nuevo_nombre} actualizados correctamente!"
+                )
+                st.rerun()
+
+        with col_btn2:
+            if st.button(
+                "🗑️ Eliminar Elemento de la Base de Datos", type="primary"
+            ):
+                st.session_state.empleados = [
+                    e
+                    for e in st.session_state.empleados
+                    if e["Nombre"] != emp_a_editar
+                ]
+                guardar_datos_empleados(st.session_state.empleados)
+                st.warning(
+                    f"Elemento {emp_a_editar} eliminado correctamente."
+                )
+                st.rerun()
+
+        st.markdown("### 📋 Plantilla Actual de Personal Sincronizado")
         df_personal = pd.DataFrame(st.session_state.empleados)
         st.dataframe(df_personal, use_container_width=True)
 
-# --- 📥 REPORTE DE PERSONAL (CSV / EXCEL) ---
+# --- 📥 REPORTE DE PERSONAL (EXCEL) ---
 elif menu == "📥 Reporte de Personal (Excel)":
     st.header("📥 Módulo de Reportes de Personal")
     st.markdown(
@@ -522,9 +592,7 @@ elif menu == "📥 Reporte de Personal (Excel)":
 
     st.session_state.empleados = cargar_datos_empleados()
     if not st.session_state.empleados:
-        st.info(
-            "ℹ️ No hay registros de personal en este momento. Registre personal en la sección previa."
-        )
+        st.info("ℹ️ No hay registros de personal en este momento.")
     else:
         df_excel = pd.DataFrame(st.session_state.empleados)
         st.dataframe(df_excel, use_container_width=True)
