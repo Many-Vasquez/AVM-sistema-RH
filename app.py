@@ -152,12 +152,12 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         col1, col2 = st.columns(2)
         with col1:
             empresa_cliente = st.text_input(
-                "Nombre de la Empresa Cliente", value="CROMIN DE MEXICO"
+                "Nombre de la Empresa Cliente", value=""
             )
             contacto_cliente = st.text_input(
-                "Nombre del Contacto / Comprador", value="LIC CRISTINA LIERA"
+                "Nombre del Contacto / Comprador", value=""
             )
-            fecha_cot = st.text_input("Fecha de Emisión", value="11/09/2026")
+            fecha_cot = st.text_input("Fecha de Emisión", value="")
         with col2:
             cantidad_guardias = st.number_input(
                 "Cantidad de Guardias", min_value=1, max_value=50, value=2
@@ -165,7 +165,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             precio_unitario = st.number_input(
                 "Precio Unitario Mensual por Guardia ($)",
                 min_value=0.0,
-                value=21551.0,
+                value=0.0,
                 step=100.0,
             )
 
