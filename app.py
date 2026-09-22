@@ -120,6 +120,25 @@ if "empleados" not in st.session_state:
 if "cotizacion_generada" not in st.session_state:
     st.session_state.cotizacion_generada = False
 
+
+# Función auxiliar para quitar bordes a la tabla del membrete
+def remove_table_borders(table):
+    tblPr = table._tbl.tblPr
+    tblBorders = OxmlElement("w:tblBorders")
+    for border_name in [
+        "top",
+        "left",
+        "bottom",
+        "right",
+        "insideH",
+        "insideV",
+    ]:
+        border = OxmlElement(f"w:{border_name}")
+        border.set(qn("w:val"), "none")
+        tblBorders.append(border)
+    tblPr.append(tblBorders)
+
+
 # --- LÓGICA DE VISTAS ---
 if st.session_state.vista_actual == "Generador de Cotizaciones":
     st.header("📊 Módulo Comercial - Generador de Cotizaciones para Clientes")
@@ -167,68 +186,83 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
 
         doc_cot = Document()
 
+        # Márgenes optimizados para que todo quepa perfectamente en 1 sola página
         for section in doc_cot.sections:
-            section.top_margin = Inches(1.0)
-            section.bottom_margin = Inches(1.0)
-            section.left_margin = Inches(1.2)
-            section.right_margin = Inches(1.2)
+            section.top_margin = Inches(0.8)
+            section.bottom_margin = Inches(0.8)
+            section.left_margin = Inches(1.0)
+            section.right_margin = Inches(1.0)
 
-        # LOGOTIPO EN EL ENCABEZADO - LADO IZQUIERDO Y COMPACTO
+        COLOR_DORADO = RGBColor(197, 155, 39)
+        COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
+        COLOR_GRIS_TEXTO = RGBColor(80, 80, 80)
+
+        # TABLA DE ENCABEZADO: Logotipo a la izquierda y Texto corporativo a la derecha
+        header_table = doc_cot.add_table(rows=1, cols=2)
+        header_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        remove_table_borders(header_table)
+
+        # Columna 0: Logotipo
+        cell_logo = header_table.cell(0, 0)
+        cell_logo.width = Inches(1.2)
+        p_logo = cell_logo.paragraphs[0]
+        p_logo.alignment = WD_ALIGN_PARAGRAPH.LEFT
         logo_path = (
             "Imagen1 (1).png"
             if os.path.exists("Imagen1 (1).png")
             else "logo.png"
         )
         if os.path.exists(logo_path):
-            header = doc_cot.sections[0].header
-            hp = header.paragraphs[0]
-            hp.alignment = WD_ALIGN_PARAGRAPH.LEFT
-            hrun = hp.add_run()
-            hrun.add_picture(logo_path, width=Inches(1.0))
+            p_logo.add_run().add_picture(logo_path, width=Inches(1.0))
 
-        COLOR_DORADO = RGBColor(197, 155, 39)
-        COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
-        COLOR_GRIS_TEXTO = RGBColor(80, 80, 80)
+        # Columna 1: Nombre de la empresa y dirección
+        cell_text = header_table.cell(0, 1)
+        cell_text.width = Inches(5.3)
 
-        p_emp = doc_cot.add_paragraph()
-        p_emp.paragraph_format.space_after = Pt(2)
+        p_emp = cell_text.paragraphs[0]
+        p_emp.paragraph_format.space_after = Pt(1)
+        p_emp.paragraph_format.space_before = Pt(0)
         run_emp_1 = p_emp.add_run("AVM")
         run_emp_1.bold = True
-        run_emp_1.font.size = Pt(15)
+        run_emp_1.font.size = Pt(13)
         run_emp_1.font.color.rgb = COLOR_NEGRO_SUAVE
 
         run_emp_2 = p_emp.add_run(
-            " GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V.\n"
+            " GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V."
         )
         run_emp_2.bold = True
-        run_emp_2.font.size = Pt(14)
+        run_emp_2.font.size = Pt(11)
         run_emp_2.font.color.rgb = COLOR_DORADO
 
-        p_dir = doc_cot.add_paragraph()
-        p_dir.paragraph_format.space_after = Pt(10)
+        p_dir = cell_text.add_paragraph()
+        p_dir.paragraph_format.space_after = Pt(0)
         run_dir = p_dir.add_run(
             "SANTA BÁRBARA NÚMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUÁREZ, NUEVO LEÓN"
         )
-        run_dir.font.size = Pt(8.5)
+        run_dir.font.size = Pt(7.5)
         run_dir.font.color.rgb = COLOR_GRIS_TEXTO
 
+        # Línea divisoria dorada
         p_line = doc_cot.add_paragraph()
-        p_line.paragraph_format.space_after = Pt(10)
+        p_line.paragraph_format.space_before = Pt(4)
+        p_line.paragraph_format.space_after = Pt(6)
         r_line = p_line.add_run(
             "_________________________________________________________________________________"
         )
-        r_line.font.size = Pt(9)
+        r_line.font.size = Pt(8)
         r_line.font.color.rgb = COLOR_DORADO
 
+        # Título de Propuesta Económica
         p_prop = doc_cot.add_paragraph()
-        p_prop.paragraph_format.space_after = Pt(8)
+        p_prop.paragraph_format.space_after = Pt(4)
         run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
         run_prop.bold = True
-        run_prop.font.size = Pt(12)
+        run_prop.font.size = Pt(11)
         run_prop.font.color.rgb = COLOR_DORADO
 
+        # Datos del cliente
         p_datos = doc_cot.add_paragraph()
-        p_datos.paragraph_format.space_after = Pt(12)
+        p_datos.paragraph_format.space_after = Pt(6)
         p_datos.add_run(f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n")
         p_datos.add_run(
             f"CLIENTE:                  {st.session_state.empresa_cliente}\n"
@@ -237,29 +271,31 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             f"ATENCIÓN:               {st.session_state.contacto_cliente}\n"
         )
         for run in p_datos.runs:
-            run.font.size = Pt(9.5)
+            run.font.size = Pt(9)
             run.bold = True
             run.font.color.rgb = COLOR_NEGRO_SUAVE
 
+        # Análisis de situación
         h2_1 = doc_cot.add_heading(level=2)
-        h2_1.paragraph_format.space_before = Pt(6)
-        h2_1.paragraph_format.space_after = Pt(4)
+        h2_1.paragraph_format.space_before = Pt(2)
+        h2_1.paragraph_format.space_after = Pt(2)
         r_h2_1 = h2_1.add_run("ANÁLISIS DE SITUACIÓN:")
-        r_h2_1.font.size = Pt(11)
+        r_h2_1.font.size = Pt(10)
         r_h2_1.font.color.rgb = COLOR_DORADO
 
         p_analisis = doc_cot.add_paragraph(
             "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal."
         )
-        p_analisis.paragraph_format.space_after = Pt(10)
-        p_analisis.runs[0].font.size = Pt(9.5)
+        p_analisis.paragraph_format.space_after = Pt(6)
+        p_analisis.runs[0].font.size = Pt(9)
         p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
 
+        # Detalle de cotización (Tabla)
         h2_2 = doc_cot.add_heading(level=2)
-        h2_2.paragraph_format.space_before = Pt(6)
-        h2_2.paragraph_format.space_after = Pt(4)
+        h2_2.paragraph_format.space_before = Pt(2)
+        h2_2.paragraph_format.space_after = Pt(2)
         r_h2_2 = h2_2.add_run("DETALLE DE COTIZACIÓN:")
-        r_h2_2.font.size = Pt(11)
+        r_h2_2.font.size = Pt(10)
         r_h2_2.font.color.rgb = COLOR_DORADO
 
         table = doc_cot.add_table(rows=2, cols=5)
@@ -279,7 +315,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
                 paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 for run in paragraph.runs:
                     run.font.bold = True
-                    run.font.size = Pt(8.5)
+                    run.font.size = Pt(8)
                     run.font.color.rgb = RGBColor(255, 255, 255)
             shading = OxmlElement("w:shd")
             shading.set(qn("w:val"), "clear")
@@ -304,30 +340,32 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
                 if i in [0, 3, 4]:
                     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                 for run in paragraph.runs:
-                    run.font.size = Pt(8.5)
+                    run.font.size = Pt(8)
                     run.font.color.rgb = COLOR_NEGRO_SUAVE
 
+        # Totales
         p_totales = doc_cot.add_paragraph()
-        p_totales.paragraph_format.space_before = Pt(6)
-        p_totales.paragraph_format.space_after = Pt(10)
+        p_totales.paragraph_format.space_before = Pt(4)
+        p_totales.paragraph_format.space_after = Pt(6)
         p_totales.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         p_totales.add_run(f"Subtotal: ${subtotal:,.2f}\n")
         p_totales.add_run(f"IVA (16%): ${iva:,.2f}\n")
         r_tot = p_totales.add_run(f"TOTAL MENSUAL: ${total:,.2f}")
         r_tot.bold = True
-        r_tot.font.size = Pt(10.5)
+        r_tot.font.size = Pt(10)
         r_tot.font.color.rgb = COLOR_DORADO
 
         for run in p_totales.runs:
             if run != r_tot:
-                run.font.size = Pt(9)
+                run.font.size = Pt(8.5)
                 run.font.color.rgb = COLOR_NEGRO_SUAVE
 
+        # Términos y condiciones
         h2_3 = doc_cot.add_heading(level=2)
-        h2_3.paragraph_format.space_before = Pt(6)
-        h2_3.paragraph_format.space_after = Pt(4)
+        h2_3.paragraph_format.space_before = Pt(2)
+        h2_3.paragraph_format.space_after = Pt(2)
         r_h2_3 = h2_3.add_run("TÉRMINOS Y CONDICIONES COMERCIALES:")
-        r_h2_3.font.size = Pt(11)
+        r_h2_3.font.size = Pt(10)
         r_h2_3.font.color.rgb = COLOR_DORADO
 
         terminos = [
@@ -355,24 +393,25 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
 
         for titulo, desc in terminos:
             p_term = doc_cot.add_paragraph()
-            p_term.paragraph_format.space_after = Pt(2)
+            p_term.paragraph_format.space_after = Pt(1)
             r_t = p_term.add_run(titulo + " ")
             r_t.bold = True
-            r_t.font.size = Pt(9)
+            r_t.font.size = Pt(8)
             r_t.font.color.rgb = COLOR_DORADO
 
             r_d = p_term.add_run(desc)
-            r_d.font.size = Pt(9)
+            r_d.font.size = Pt(8)
             r_d.font.color.rgb = COLOR_NEGRO_SUAVE
 
+        # Pie de página / Frase final
         p_pie = doc_cot.add_paragraph()
-        p_pie.paragraph_format.space_before = Pt(10)
+        p_pie.paragraph_format.space_before = Pt(6)
         p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r_pie = p_pie.add_run(
             '"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
         )
         r_pie.italic = True
-        r_pie.font.size = Pt(8.5)
+        r_pie.font.size = Pt(8)
         r_pie.font.color.rgb = COLOR_DORADO
 
         buffer_cot = BytesIO()
