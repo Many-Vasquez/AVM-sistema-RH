@@ -156,7 +156,7 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
             contacto_cliente = st.text_input(
                 "Nombre del Contacto / Comprador", value=""
             )
-            fecha_cot = st.text_input("Fecha de Emisión", value="11/09/2026")
+            fecha_cot = st.text_input("Fecha de Emisión", value="")
         with col2:
             cantidad_guardias = st.number_input(
                 "Cantidad de Guardias",
@@ -324,7 +324,7 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         row_cells = table.rows[1].cells
         row_cells[0].text = str(st.session_state.cantidad_guardias)
         row_cells[1].text = (
-            "Guardias Intramuro/Extramuros- Control de Accesos"
+            "Guardias Intramuros/Extramuros- Control de Accesos"
         )
         row_cells[2].text = (
             "Control estricto de acceso peatonal y vehicular "
