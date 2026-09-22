@@ -334,7 +334,7 @@ b) Que, para dar cumplimiento a su objeto social, requiere de personal capacitad
 II. Declara el TRABAJADOR:
 a) Ser una persona física, de nacionalidad {datos['nacionalidad']}, de sexo {datos['sexo']}, con fecha de nacimiento el {datos['fecha_nacimiento']}, estado civil {datos['estado_civil']}, Clave Única de Registro de Población {datos['curp']}, Registro Federal de Contribuyentes {datos['rfc']} y Número de Seguridad Social (NSS) {datos['nss']}, con domicilio en {datos['domicilio']}.
 b) Que cuenta con los conocimientos, habilidades y experiencia necesarios para prestar al PATRÓN los servicios del puesto encomendado.
-c) Que está de acuerdo en prestar los servicios descritos en el presente contrato por tiempo indeterminado.
+c) Que está de acuerdo en prestar los servicios descritos in el presente contrato por tiempo indeterminado.
 
 III. Declaran ambas partes:
 a) Que cuentan con las facultades suficientes para la celebración del presente contrato y obligarse a los términos del mismo, reconociéndose mutuamente la personalidad con la que comparecen.
@@ -468,7 +468,7 @@ elif menu == "Generador de Cotizaciones":
             st.session_state.cantidad_guardias = cantidad_guardias
             st.session_state.precio_unitario = precio_unitario
 
-    # Botón de descarga fuera del formulario con diseño profesional en tabla y logotipo
+    # Botón de descarga con diseño corporativo avanzado (Marca de agua, Títulos Dorados y Negros)
     if st.session_state.get("cotizacion_generada", False):
         subtotal = (
             st.session_state.cantidad_guardias
@@ -487,29 +487,46 @@ elif menu == "Generador de Cotizaciones":
             section.left_margin = Inches(1)
             section.right_margin = Inches(1)
 
-        # Inserción del logotipo institucional en el documento Word
+        # Inserción del logotipo como Marca de Agua sutil en el pie/encabezado de la primera sección
         if os.path.exists("logo.png"):
-            p_logo = doc_cot.add_paragraph()
-            p_logo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_logo.add_run().add_picture("logo.png", width=Inches(1.5))
+            header = sections[0].header
+            p_水印 = header.paragraphs[0]
+            p_水印.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            run_wm = p_水印.add_run()
+            # Añadimos el logo pequeño y sutil en el fondo/encabezado
+            run_wm.add_picture("logo.png", width=Inches(0.8))
 
-        # Encabezado corporativo institucional
+        # Definir Colores Corporativos Exactos
+        COLOR_DORADO = RGBColor(212, 175, 55)  # #D4AF37
+        COLOR_NEGRO_SUAVE = RGBColor(30, 30, 30)  # #1E1E1E
+
+        # Título principal de la empresa con combinación negro/dorado
         p_emp = doc_cot.add_paragraph()
-        run_emp = p_emp.add_run(
-            "AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SA DE CV\n"
-        )
-        run_emp.bold = True
-        run_emp.font.size = Pt(12)
-        run_emp.font.color.rgb = RGBColor(27, 54, 93)
+        run_emp_1 = p_emp.add_run("AVM GRUPO INTEGRAL ")
+        run_emp_1.bold = True
+        run_emp_1.font.size = Pt(14)
+        run_emp_1.font.color.rgb = COLOR_NEGRO_SUAVE
+
+        run_emp_2 = p_emp.add_run("DE SEGURIDAD PRIVADA DEL NORTE, SA DE CV\n")
+        run_emp_2.bold = True
+        run_emp_2.font.size = Pt(14)
+        run_emp_2.font.color.rgb = COLOR_DORADO
 
         p_dir = doc_cot.add_paragraph()
         run_dir = p_dir.add_run(
-            "SANTA BARBARA NUMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUAREZ, NUEVO LEON\n\nPROPUESTA ECONOMICA DE SERVICIOS"
+            "SANTA BARBARA NUMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUAREZ, NUEVO LEON\n\n"
         )
         run_dir.font.size = Pt(9)
-        run_dir.font.color.rgb = RGBColor(90, 90, 90)
+        run_dir.font.color.rgb = RGBColor(100, 100, 100)
 
-        # Datos generales
+        # Título de Propuesta Económica grande y elegante en Dorado
+        p_prop = doc_cot.add_paragraph()
+        run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
+        run_prop.bold = True
+        run_prop.font.size = Pt(13)
+        run_prop.font.color.rgb = COLOR_DORADO
+
+        # Datos generales del cliente
         p_datos = doc_cot.add_paragraph()
         p_datos.add_run(f"FECHA:\t\t{st.session_state.fecha_cot}\n")
         p_datos.add_run(f"EMPRESA:\t{st.session_state.empresa_cliente}\n")
@@ -517,28 +534,29 @@ elif menu == "Generador de Cotizaciones":
         for run in p_datos.runs:
             run.font.size = Pt(10)
             run.bold = True
+            run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Análisis de situación
+        # Análisis de situación (Título grande en Dorado)
         h2_1 = doc_cot.add_heading(level=2)
         r_h2_1 = h2_1.add_run("ANÁLISIS DE SITUACIÓN:")
-        r_h2_1.font.size = Pt(11)
-        r_h2_1.font.color.rgb = RGBColor(27, 54, 93)
+        r_h2_1.font.size = Pt(12)
+        r_h2_1.font.color.rgb = COLOR_DORADO
 
         p_analisis = doc_cot.add_paragraph(
             "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal[cite: 10]."
         )
         p_analisis.runs[0].font.size = Pt(10)
+        p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Tabla de Cotización profesional
+        # Tabla de Cotización profesional con cabecera en Dorado y Negro
         h2_2 = doc_cot.add_heading(level=2)
-        r_h2_2 = h2_2.add_run("PROPUESTA ECONÓMICA")
-        r_h2_2.font.size = Pt(11)
-        r_h2_2.font.color.rgb = RGBColor(27, 54, 93)
+        r_h2_2 = h2_2.add_run("DETALLE DE COTIZACIÓN")
+        r_h2_2.font.size = Pt(12)
+        r_h2_2.font.color.rgb = COLOR_DORADO
 
         table = doc_cot.add_table(rows=2, cols=5)
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
-        # Encabezados de tabla
         headers = [
             "CANTIDAD",
             "CATEGORÍA",
@@ -552,13 +570,15 @@ elif menu == "Generador de Cotizaciones":
             for paragraph in hdr_cells[i].paragraphs:
                 for run in paragraph.runs:
                     run.font.bold = True
-                    run.font.size = Pt(9)
-                    run.font.color.rgb = RGBColor(255, 255, 255)
-            # Fondo oscuro para la cabecera de tabla
+                    run.font.size = Pt(9.5)
+                    run.font.color.rgb = RGBColor(
+                        255, 255, 255
+                    )  # Letras blancas sobre fondo dorado/negro
+            # Fondo de celda en tono dorado elegante #D4AF37
             shading = OxmlElement("w:shd")
             shading.set(qn("w:val"), "clear")
             shading.set(qn("w:color"), "auto")
-            shading.set(qn("w:fill"), "1B365D")
+            shading.set(qn("w:fill"), "D4AF37")
             hdr_cells[i]._tc.get_or_add_tcPr().append(shading)
 
         # Fila de datos
@@ -576,6 +596,7 @@ elif menu == "Generador de Cotizaciones":
             for paragraph in cell.paragraphs:
                 for run in paragraph.runs:
                     run.font.size = Pt(9)
+                    run.font.color.rgb = COLOR_NEGRO_SUAVE
 
         # Totales debajo de la tabla
         p_totales = doc_cot.add_paragraph()
@@ -584,18 +605,19 @@ elif menu == "Generador de Cotizaciones":
         p_totales.add_run(f"IVA (16%): ${iva:,.2f}\n")
         r_tot = p_totales.add_run(f"TOTAL: ${total:,.2f}")
         r_tot.bold = True
-        r_tot.font.size = Pt(11)
-        r_tot.font.color.rgb = RGBColor(27, 54, 93)
+        r_tot.font.size = Pt(12)
+        r_tot.font.color.rgb = COLOR_DORADO
 
         for run in p_totales.runs:
             if run != r_tot:
                 run.font.size = Pt(10)
+                run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Términos y Condiciones
+        # Términos y Condiciones (Títulos grandes y en dorado)
         h2_3 = doc_cot.add_heading(level=2)
         r_h2_3 = h2_3.add_run("TÉRMINOS Y CONDICIONES COMERCIALES:")
-        r_h2_3.font.size = Pt(11)
-        r_h2_3.font.color.rgb = RGBColor(27, 54, 93)
+        r_h2_3.font.size = Pt(12)
+        r_h2_3.font.color.rgb = COLOR_DORADO
 
         terminos = [
             (
@@ -625,10 +647,11 @@ elif menu == "Generador de Cotizaciones":
             r_t = p_term.add_run(titulo + " ")
             r_t.bold = True
             r_t.font.size = Pt(9.5)
-            r_t.font.color.rgb = RGBColor(27, 54, 93)
+            r_t.font.color.rgb = COLOR_DORADO  # Títulos de términos en dorado
 
             r_d = p_term.add_run(desc)
             r_d.font.size = Pt(9.5)
+            r_d.font.color.rgb = COLOR_NEGRO_SUAVE
 
         # Eslogan final
         p_pie = doc_cot.add_paragraph()
@@ -637,18 +660,18 @@ elif menu == "Generador de Cotizaciones":
             '\n"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
         )
         r_pie.italic = True
-        r_pie.font.size = Pt(9)
-        r_pie.font.color.rgb = RGBColor(90, 90, 90)
+        r_pie.font.size = Pt(9.5)
+        r_pie.font.color.rgb = COLOR_DORADO
 
         buffer_cot = BytesIO()
         doc_cot.save(buffer_cot)
         buffer_cot.seek(0)
 
         st.success(
-            "¡Cotización generada con éxito con formato profesional y logotipo!"
+            "¡Cotización generada con éxito con diseño ejecutivo, marca de agua y estilo dorado!"
         )
         st.download_button(
-            label="📥 Descargar Propuesta Económica en Word (Formato Ejecutivo)",
+            label="📥 Descargar Propuesta Económica en Word (Estilo Ejecutivo Dorado)",
             data=buffer_cot,
             file_name=f"Cotizacion_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
