@@ -1,13 +1,14 @@
-import os
+from datetime import datetime, time
 from io import BytesIO
+import os
 import pandas as pd
+import streamlit as st
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-import streamlit as st
+from docx.shared import Inches, Pt, RGBColor
 
 # Configuración de la página
 st.set_page_config(
@@ -90,13 +91,21 @@ with col_titulo:
         "Sistema de Gestión de Recursos Humanos y Propuestas Comerciales"
     )
 
-# --- MENÚ LATERAL Y BOTONES SEPARADOS ---
-st.sidebar.markdown(
-    "### 🧭 Administración", unsafe_allow_html=True
-)
+# --- INICIALIZACIÓN DE ESTADOS ---
+if "empleados" not in st.session_state:
+    st.session_state.empleados = []
+
+if "asistencias" not in st.session_state:
+    st.session_state.asistencias = []
+
+if "cotizacion_generada" not in st.session_state:
+    st.session_state.cotizacion_generada = False
 
 if "vista_actual" not in st.session_state:
     st.session_state.vista_actual = "Sistema de Recursos Humanos"
+
+# --- MENÚ LATERAL ---
+st.sidebar.markdown("### 🧭 Administración", unsafe_allow_html=True)
 
 if st.sidebar.button("📊 Ir a Módulo Comercial (Cotizador)"):
     st.session_state.vista_actual = "Generador de Cotizaciones"
@@ -105,6 +114,8 @@ menu_hr = st.sidebar.selectbox(
     "Módulo de Recursos Humanos",
     [
         "Registro de Personal",
+        "Checador Biométrico de Huella",
+        "Reportes Métricos de Asistencia",
         "Generar Contrato Sujeto a Prueba",
         "Generar Contrato Tiempo Indeterminado",
     ],
@@ -114,14 +125,8 @@ if menu_hr != st.session_state.get("menu_hr_prev", ""):
     st.session_state.vista_actual = "RRHH"
     st.session_state.menu_hr_prev = menu_hr
 
-if "empleados" not in st.session_state:
-    st.session_state.empleados = []
 
-if "cotizacion_generada" not in st.session_state:
-    st.session_state.cotizacion_generada = False
-
-
-# Función auxiliar para quitar bordes a la tabla del membrete
+# Función auxiliar para quitar bordes a tablas en Word
 def remove_table_borders(table):
     tblPr = table._tbl.tblPr
     tblBorders = OxmlElement("w:tblBorders")
@@ -147,12 +152,12 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         col1, col2 = st.columns(2)
         with col1:
             empresa_cliente = st.text_input(
-                "Nombre de la Empresa Cliente", value=""
+                "Nombre de la Empresa Cliente", value="CROMIN DE MEXICO"
             )
             contacto_cliente = st.text_input(
-                "Nombre del Contacto / Comprador", value=""
+                "Nombre del Contacto / Comprador", value="LIC CRISTINA LIERA"
             )
-            fecha_cot = st.text_input("Fecha de Emisión", value="")
+            fecha_cot = st.text_input("Fecha de Emisión", value="11/09/2026")
         with col2:
             cantidad_guardias = st.number_input(
                 "Cantidad de Guardias", min_value=1, max_value=50, value=2
@@ -160,13 +165,11 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             precio_unitario = st.number_input(
                 "Precio Unitario Mensual por Guardia ($)",
                 min_value=0.0,
-                value=0.0,
+                value=21551.0,
                 step=100.0,
             )
 
-        submitted_cot = st.form_submit_button(
-            "⚙️ Generar Propuesta Económica"
-        )
+        submitted_cot = st.form_submit_button("⚙️ Generar Propuesta Económica")
 
         if submitted_cot:
             st.session_state.cotizacion_generada = True
@@ -186,7 +189,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
 
         doc_cot = Document()
 
-        # Márgenes optimizados para que todo quepa perfectamente en 1 sola página
         for section in doc_cot.sections:
             section.top_margin = Inches(0.8)
             section.bottom_margin = Inches(0.8)
@@ -197,12 +199,10 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
         COLOR_GRIS_TEXTO = RGBColor(80, 80, 80)
 
-        # TABLA DE ENCABEZADO: Logotipo a la izquierda y Texto corporativo a la derecha
         header_table = doc_cot.add_table(rows=1, cols=2)
         header_table.alignment = WD_TABLE_ALIGNMENT.CENTER
         remove_table_borders(header_table)
 
-        # Columna 0: Logotipo
         cell_logo = header_table.cell(0, 0)
         cell_logo.width = Inches(1.2)
         p_logo = cell_logo.paragraphs[0]
@@ -215,13 +215,11 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         if os.path.exists(logo_path):
             p_logo.add_run().add_picture(logo_path, width=Inches(1.0))
 
-        # Columna 1: Nombre de la empresa y dirección
         cell_text = header_table.cell(0, 1)
         cell_text.width = Inches(5.3)
 
         p_emp = cell_text.paragraphs[0]
         p_emp.paragraph_format.space_after = Pt(1)
-        p_emp.paragraph_format.space_before = Pt(0)
         run_emp_1 = p_emp.add_run("AVM")
         run_emp_1.bold = True
         run_emp_1.font.size = Pt(13)
@@ -242,7 +240,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         run_dir.font.size = Pt(7.5)
         run_dir.font.color.rgb = COLOR_GRIS_TEXTO
 
-        # Línea divisoria dorada
         p_line = doc_cot.add_paragraph()
         p_line.paragraph_format.space_before = Pt(4)
         p_line.paragraph_format.space_after = Pt(6)
@@ -252,7 +249,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         r_line.font.size = Pt(8)
         r_line.font.color.rgb = COLOR_DORADO
 
-        # Título de Propuesta Económica
         p_prop = doc_cot.add_paragraph()
         p_prop.paragraph_format.space_after = Pt(4)
         run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
@@ -260,7 +256,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         run_prop.font.size = Pt(11)
         run_prop.font.color.rgb = COLOR_DORADO
 
-        # Datos del cliente
         p_datos = doc_cot.add_paragraph()
         p_datos.paragraph_format.space_after = Pt(6)
         p_datos.add_run(f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n")
@@ -275,7 +270,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             run.bold = True
             run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Análisis de situación
         h2_1 = doc_cot.add_heading(level=2)
         h2_1.paragraph_format.space_before = Pt(2)
         h2_1.paragraph_format.space_after = Pt(2)
@@ -290,7 +284,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         p_analisis.runs[0].font.size = Pt(9)
         p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Detalle de cotización (Tabla)
         h2_2 = doc_cot.add_heading(level=2)
         h2_2.paragraph_format.space_before = Pt(2)
         h2_2.paragraph_format.space_after = Pt(2)
@@ -326,7 +319,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         row_cells = table.rows[1].cells
         row_cells[0].text = str(st.session_state.cantidad_guardias)
         row_cells[1].text = (
-            "Guardias Intramuros/Extramuros- Control de Accesos"
+            "Guardias Intramuro/Extramuros- Control de Accesos"
         )
         row_cells[2].text = (
             "Control estricto de acceso peatonal y vehicular "
@@ -343,7 +336,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
                     run.font.size = Pt(8)
                     run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Totales
         p_totales = doc_cot.add_paragraph()
         p_totales.paragraph_format.space_before = Pt(4)
         p_totales.paragraph_format.space_after = Pt(6)
@@ -360,7 +352,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
                 run.font.size = Pt(8.5)
                 run.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Términos y condiciones
         h2_3 = doc_cot.add_heading(level=2)
         h2_3.paragraph_format.space_before = Pt(2)
         h2_3.paragraph_format.space_after = Pt(2)
@@ -403,7 +394,6 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             r_d.font.size = Pt(8)
             r_d.font.color.rgb = COLOR_NEGRO_SUAVE
 
-        # Pie de página / Frase final
         p_pie = doc_cot.add_paragraph()
         p_pie.paragraph_format.space_before = Pt(6)
         p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -427,7 +417,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         )
 
 else:
-    # --- MÓDULO DE RECURSOS HUMANOS Y CONTRATOS ---
+    # --- MÓDULO DE RECURSOS HUMANOS Y ASISTENCIA ---
     if menu_hr == "Registro de Personal":
         st.header("📝 Registro de Nuevo Elemento / Guardia")
 
@@ -488,10 +478,155 @@ else:
             df = pd.DataFrame(st.session_state.empleados)
             st.dataframe(df)
 
-    elif menu_hr == "Generar Contrato Sujeto a Prueba":
-        st.header(
-            "📄 Generador de Contrato - Sujeto a Prueba (30 Días)"
+    elif menu_hr == "Checador Biométrico de Huella":
+        st.header("👆 Terminal Biométrica - Control de Asistencia y Turnos")
+        st.markdown(
+            "Simulación de lectura de huella digital o registro rápido por número de seguridad social (NSS) para cambios de turno en planta."
         )
+
+        if not st.session_state.empleados:
+            st.warning(
+                "⚠️ No hay elementos registrados. Registra personal primero en 'Registro de Personal'."
+            )
+        else:
+            col_b1, col_b2 = st.columns(2)
+
+            with col_b1:
+                nombres_empleados = [
+                    e["nombre"] for e in st.session_state.empleados
+                ]
+                emp_checador = st.selectbox(
+                    "Seleccionar Elemento / Guardia", nombres_empleados
+                )
+                datos_emp = next(
+                    e
+                    for e in st.session_state.empleados
+                    if e["nombre"] == emp_checador
+                )
+
+                st.info(
+                    f"**NSS:** {datos_emp['nss']} \n\n **Puesto:** {datos_emp['puesto']}"
+                )
+
+                tipo_movimiento = st.radio(
+                    "Tipo de Registro", ["Entrada de Turno", "Salida de Turno"]
+                )
+
+            with col_b2:
+                st.markdown("### 🖐️ Panel de Validación Biométrica")
+                st.markdown(
+                    "Coloque el dedo en el lector biométrico o pulse el botón para registrar huella:"
+                )
+
+                # Simulación visual del lector de huella
+                if st.button(
+                    "🔴 ESCANEAR HUELLA DIGITAL (Simulador USB)",
+                    use_container_width=True,
+                ):
+                    ahora = datetime.now()
+                    fecha_str = ahora.strftime("%Y-%m-%d")
+                    hora_str = ahora.strftime("%H:%M:%S")
+
+                    # Regla de puntualidad: Entrada límite a las 08:00:00 AM para turno matutino
+                    hora_limite = time(8, 0, 0)
+                    hora_actual = ahora.time()
+
+                    if tipo_movimiento == "Entrada de Turno":
+                        if hora_actual <= hora_limite:
+                            puntualidad = "A TIEMPO"
+                            cumple_puntualidad = "SÍ"
+                        else:
+                            puntualidad = "RETARDO"
+                            cumple_puntualidad = "NO"
+                        asistencia_valida = "SÍ"
+                    else:
+                        puntualidad = "N/A (Salida)"
+                        cumple_puntualidad = "N/A"
+                        asistencia_valida = "SÍ"
+
+                    # Bono de asistencia y puntualidad condicionado
+                    if (
+                        cumple_puntualidad == "SÍ"
+                        or tipo_movimiento == "Salida de Turno"
+                    ):
+                        bono_otorgado = "SÍ ($900.00)"
+                    else:
+                        bono_otorgado = (
+                            "NO (Castigado por retardo/inasistencia)"
+                        )
+
+                    nuevo_registro = {
+                        "Fecha": fecha_str,
+                        "Nombre": datos_emp["nombre"],
+                        "NSS": datos_emp["nss"],
+                        "Movimiento": tipo_movimiento,
+                        "Hora": hora_str,
+                        "Estado": puntualidad,
+                        "Bono Asistencia/Puntualidad": bono_otorgado,
+                    }
+
+                    st.session_state.asistencias.append(nuevo_registro)
+                    st.success(
+                        f"✅ ¡{tipo_movimiento.upper()} registrada con éxito para {datos_emp['nombre']} a las {hora_str}!"
+                    )
+
+        if len(st.session_state.asistencias) > 0:
+            st.subheader("⚡ Últimos Registros Biométricos en Tiempo Real")
+            df_asist = pd.DataFrame(st.session_state.asistencias)
+            st.dataframe(df_asist, use_container_width=True)
+
+    elif menu_hr == "Reportes Métricos de Asistencia":
+        st.header("📈 Reportes Métricos y Auditoría de Asistencia")
+        st.markdown(
+            "Control gerencial de incidencias, retardos y asignación de bonos semanales."
+        )
+
+        if not st.session_state.asistencias:
+            st.info(
+                "ℹ️ Aún no hay registros en el checador biométrico. Realiza registros en la sección anterior."
+            )
+        else:
+            df_reportes = pd.DataFrame(st.session_state.asistencias)
+
+            # Métricas rápidas en columnas
+            col_m1, col_m2, col_m3 = st.columns(3)
+            with col_m1:
+                st.metric(
+                    label="Total Registros Biométricos",
+                    value=len(df_reportes),
+                )
+            with col_m2:
+                retardos = len(df_reportes[df_reportes["Estado"] == "RETARDO"])
+                st.metric(
+                    label="Incidencias / Retardos",
+                    value=retardos,
+                    delta=f"-{retardos}" if retardos > 0 else "0",
+                    delta_color="inverse",
+                )
+            with col_m3:
+                bonos_ok = len(
+                    df_reportes[
+                        df_reportes["Bono Asistencia/Puntualidad"].str.contains(
+                            "SÍ"
+                        )
+                    ]
+                )
+                st.metric(label="Bonos Ganados", value=bonos_ok)
+
+            st.subheader("📋 Tabla Completa de Auditoría Operativa")
+            st.dataframe(df_reportes, use_container_width=True)
+
+            # Botón de exportación a CSV para Excel
+            csv_data = df_reportes.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="📥 Exportar Reporte Métrico a CSV (Compatible con Excel)",
+                data=csv_data,
+                file_name=f"Reporte_Asistencia_AVM_{datetime.now().strftime('%Y-%m-%d')}.csv",
+                mime="text/csv",
+            )
+
+    elif menu_hr == "Generar Contrato Sujeto a Prueba":
+        st.header("📄 Generador de Contrato - Sujeto a Prueba (30 Días)")
 
         if not st.session_state.empleados:
             st.warning(
@@ -543,7 +678,7 @@ TERCERA. El TRABAJADOR prestará sus servicios en el domicilio del PATRÓN o en 
 
 CUARTA. El Trabajador se obliga a cumplir estrictamente las consignas generales y particulares establecidas para cada servicio, procedimientos de acceso, control de visitantes, vigilancia perimetral y rondines. En caso de emergencias, su actuación se limitará estrictamente a activar los protocolos de seguridad pasiva y dar aviso inmediato a los cuerpos de auxilio públicos y central de operaciones.
 
-QUINTA. El PATRÓN pagará al TRABAJADOR un salario ordinario de {datos['salario_semanal']} pesos semanales, cubriéndose los viernes de cada semana (incluye séptimos días y días festivos). Adicionalmente, el PATRÓN otorgará un Bono de Asistencia Semanal de $450.00 pesos y un Bono de Puntualidad Semanal de $450.00 pesos, condicionados al cumplimiento perfecto del 100% de asistencias y puntualidad.
+QUINTA. El PATRÓN pagará al TRABAJADOR un salario ordinario de {datos['salario_semanal']} pesos semanales, cubriéndose los viernes de cada semana (incluye séptimos días y días festivos). Adicionalmente, el PATRÓN otorgará un Bono de Asistencia Semanal de $450.00 pesos y un Bono de Puntualidad Semanal de $450.00 pesos, condicionados al cumplimiento perfecto del 100% de asistencias y puntualidad validados mediante el sistema biométrico.
 
 SEXTA. La duración máxima de la semana laboral será de 45 (cuarenta y cinco) horas en turnos rotativos (8x16, 12x12, 24x24 horas, etc.). Contará con 30 minutos intermedios para alimentos y reposo.
 
@@ -663,7 +798,7 @@ b) Que, para dar cumplimiento a su objeto social, requiere de personal capacitad
 II. Declara el TRABAJADOR:
 a) Ser una persona física, de nacionalidad {datos['nacionalidad']}, de sexo {datos['sexo']}, con fecha de nacimiento el {datos['fecha_nacimiento']}, estado civil {datos['estado_civil']}, Clave Única de Registro de Población {datos['curp']}, Registro Federal de Contribuyentes {datos['rfc']} y Número de Seguridad Social (NSS) {datos['nss']}, con domicilio en {datos['domicilio']}.
 b) Que cuenta con los conocimientos, habilidades y experiencia necesarios para prestar al PATRÓN los servicios del puesto encomendado.
-c) Que está de acuerdo en prestar los servicios descritos in el presente contrato por tiempo indeterminado.
+c) Que está de acuerdo en prestar los servicios descritos en el presente contrato por tiempo indeterminado.
 
 III. Declaran ambas partes:
 a) Que cuentan con las facultades suficientes para la celebración del presente contrato y obligarse a los términos del mismo, reconociéndose mutuamente la personalidad con la que comparecen.
@@ -678,7 +813,7 @@ TERCERA. El TRABAJADOR prestará sus servicios en el domicilio del PATRÓN o en 
 
 CUARTA. El Trabajador se obliga a cumplir estrictamente las consignas generales y particulares establecidas para cada servicio, procedimientos de acceso, control de visitantes, vigilancia perimetral y rondines. En caso de emergencias, su actuación se limitará a activar los protocolos de seguridad pasiva y dar aviso a los cuerpos de auxilio y central de operaciones.
 
-QUINTA. El PATRÓN pagará al TRABAJADOR un salario ordinario de {datos['salario_semanal']} pesos semanales, cubriéndose los viernes de cada semana. En este importe ya se incluye el pago correspondiente a los séptimos días y días festivos. Adicionalmente, el PATRÓN otorgará un Bono de Asistencia Semanal de $450.00 pesos y un Bono de Puntualidad Semanal de $450.00 pesos, condicionados al cumplimiento del 100% de asistencia y puntualidad.
+QUINTA. El PATRÓN pagará al TRABAJADOR un salario ordinario de {datos['salario_semanal']} pesos semanales, cubriéndose los viernes de cada semana. En este importe ya se incluye el pago correspondiente a los séptimos días y días festivos. Adicionalmente, el PATRÓN otorgará un Bono de Asistencia Semanal de $450.00 pesos y un Bono de Puntualidad Semanal de $450.00 pesos, condicionados al cumplimiento del 100% de asistencia y puntualidad validados biométricamente.
 
 SEXTA. La duración máxima de la semana laboral será de 45 (cuarenta y cinco) horas en turnos rotativos (8x16, 12x12, 24x24 horas, etc.). Contará con 30 minutos intermedios para alimentos y reposo.
 
@@ -746,7 +881,7 @@ ________________________________--
 """
 
                 for parrafo in texto_indet.split("\n\n"):
-                    if parrafo.strip():
+                    if parrafo.startX := parrafo.strip():
                         doc.add_paragraph(parrafo.strip())
 
                 buffer = BytesIO()
