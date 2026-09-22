@@ -212,7 +212,8 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             inline_shape._inline.getparent().replace(
                 inline_shape._inline, new_element
             )
-            new_element.append(r_element.graphic)
+            new_element.append(r_element.graphic
+            )
 
         COLOR_DORADO = RGBColor(197, 155, 39)
         COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
