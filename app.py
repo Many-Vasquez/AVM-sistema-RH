@@ -173,7 +173,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             section.left_margin = Inches(1.2)
             section.right_margin = Inches(1.2)
 
-      # INSERCIÓN CORRECTA DE MARCA DE AGUA FLOTANTE EN EL ENCABEZADO
+    # LOGOTIPO EN EL ENCABEZADO - LADO IZQUIERDO Y COMPACTO
         logo_path = (
             "Imagen1 (1).png"
             if os.path.exists("Imagen1 (1).png")
@@ -182,39 +182,15 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         if os.path.exists(logo_path):
             header = doc_cot.sections[0].header
             hp = header.paragraphs[0]
-            hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            hp.alignment = (
+                WD_ALIGN_PARAGRAPH.LEFT
+            )  # Lo alinea elegantemente a la izquierda
             hrun = hp.add_run()
-
-            # Añadir la imagen con tamaño de marca de agua
-            inline_shape = hrun.add_picture(logo_path, width=Inches(4.5))
-
-            # Convertir la imagen en flotante detrás del texto (Marca de agua real)
-            r_element = inline_shape._inline
-            new_element = parse_xml(
-                r"""
-                <wp:anchor xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" 
-                           simplePos="0" relativeHeight="251658240" behindDoc="1" locked="1" layoutInCell="1" allowOverlap="1">
-                    <wp:simplePos x="0" y="0"/>
-                    <wp:positionH relativeFrom="page">
-                        <wp:align>center</wp:align>
-                    </wp:positionH>
-                    <wp:positionV relativeFrom="page">
-                        <wp:align>center</wp:align>
-                    </wp:positionV>
-                    <wp:extent cx="4572000" cy="4572000"/>
-                    <wp:effectExtent l="0" t="0" r="0" b="0"/>
-                    <wp:wrapNone/>
-                    <wp:docPr id="1" name="Marca de Agua AVM"/>
-                    <wp:cNvGraphicFramePr/>
-                </wp:anchor>
-            """
+            hrun.add_picture(
+                logo_path, width=Inches(1.0)
+            )  # Tamaño compacto (1 pulgada de ancho
             )
-            inline_shape._inline.getparent().replace(
-                inline_shape._inline, new_element
-            )
-            new_element.append(r_element.graphic
-            )
-
+            
         COLOR_DORADO = RGBColor(197, 155, 39)
         COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
         COLOR_GRIS_TEXTO = RGBColor(80, 80, 80)
