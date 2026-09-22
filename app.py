@@ -5,8 +5,8 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
+from docx.oxml import OxmlElement, parse_xml
+from docx.oxml.ns import qn, nsdecls
 import streamlit as st
 
 # Configuración de la página
@@ -16,7 +16,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Aplicar diseño corporativo en Negro y Dorado
+# Estilos corporativos en Negro y Dorado
 st.markdown(
     """
     <style>
@@ -51,6 +51,7 @@ st.markdown(
             border: none;
             border-radius: 4px;
             padding: 0.5rem 1rem;
+            width: 100%;
         }
         .stButton>button:hover {
             background-color: #f3e5ab;
@@ -87,109 +88,412 @@ with col_titulo:
         "Sistema de Gestión de Recursos Humanos y Propuestas Comerciales"
     )
 
-# Menú lateral
-menu = st.sidebar.selectbox(
-    "Menú de Navegación",
+# --- MENÚ LATERAL Y BOTONES SEPARADOS ---
+st.sidebar.markdown(
+    "### 🧭 Navegación General", unsafe_allow_html=True
+)
+
+# Estado para controlar la vista activa si se usan botones independientes
+if "vista_actual" not in st.session_state:
+    st.session_state.vista_actual = "Sistema de Recursos Humanos"
+
+# Botón independiente para el Módulo Comercial / Cotizador
+if st.sidebar.button("📊 Ir a Módulo Comercial (Cotizador)"):
+    st.session_state.vista_actual = "Generador de Cotizaciones"
+
+# Menú desplegable tradicional para Recursos Humanos / Contratos
+menu_hr = st.sidebar.selectbox(
+    "Módulo de Recursos Humanos",
     [
         "Registro de Personal",
         "Generar Contrato Sujeto a Prueba",
         "Generar Contrato Tiempo Indeterminado",
-        "Generador de Cotizaciones",
     ],
 )
 
-# Base de datos simulada en memoria de la sesión
+# Si el usuario usa el selectbox de RRHH, cambiamos la vista a RRHH
+if menu_hr != st.session_state.get("menu_hr_prev", ""):
+    st.session_state.vista_actual = "RRHH"
+    st.session_state.menu_hr_prev = menu_hr
+
+# Base de datos simulada en memoria
 if "empleados" not in st.session_state:
     st.session_state.empleados = []
 
 if "cotizacion_generada" not in st.session_state:
     st.session_state.cotizacion_generada = False
 
-if menu == "Registro de Personal":
-    st.header("📝 Registro de Nuevo Elemento / Guardia")
+# --- LÓGICA DE VISTAS ---
+if st.session_state.vista_actual == "Generador de Cotizaciones":
+    st.header("📊 Módulo Comercial - Generador de Cotizaciones para Clientes")
 
-    with st.form("form_empleado"):
+    with st.form("form_cotizacion"):
         col1, col2 = st.columns(2)
-
         with col1:
-            nombre = st.text_input("Nombre Completo del Trabajador")
-            nacionalidad = st.text_input("Nacionalidad", value="Mexicana")
-            sexo = st.selectbox("Sexo", ["Masculino", "Femenino"])
-            fecha_nacimiento = st.text_input(
-                "Fecha de Nacimiento (ej. 15/05/1995)"
+            empresa_cliente = st.text_input(
+                "Nombre de la Empresa Cliente", value="CROMIN DE MEXICO"
             )
-            estado_civil = st.selectbox(
-                "Estado Civil", ["Soltero/a", "Casado/a", "Viudo/a"]
+            contacto_cliente = st.text_input(
+                "Nombre del Contacto / Comprador", value="LIC CRISTINA LIERA"
             )
-
+            fecha_cot = st.text_input("Fecha de Emisión", value="11/09/2026")
         with col2:
-            curp = st.text_input("CURP")
-            rfc = st.text_input("RFC")
-            nss = st.text_input(
-                "NSS (Número de Seguridad Social - 11 dígitos)"
+            cantidad_guardias = st.number_input(
+                "Cantidad de Guardias", min_value=1, max_value=50, value=2
             )
-            domicilio = st.text_area("Domicilio Completo")
-            puesto = st.text_input("Puesto", value="GUARDIA DE SEGURIDAD")
-            salario_semanal = st.text_input(
-                "Salario Semanal (ej. $2,103.85)", value="$2,103.85"
+            precio_unitario = st.number_input(
+                "Precio Unitario Mensual por Guardia ($)",
+                min_value=0.0,
+                value=21551.0,
+                step=100.0,
             )
 
-        submitted = st.form_submit_button("Guardar Empleado")
+        submitted_cot = st.form_submit_button(
+            "⚙️ Generar Propuesta Económica"
+        )
 
-        if submitted:
-            if nombre and curp:
-                nuevo_emp = {
-                    "nombre": nombre,
-                    "nacionalidad": nacionalidad,
-                    "sexo": sexo,
-                    "fecha_nacimiento": fecha_nacimiento,
-                    "estado_civil": estado_civil,
-                    "curp": curp,
-                    "rfc": rfc,
-                    "nss": nss,
-                    "domicilio": domicilio,
-                    "puesto": puesto,
-                    "salario_semanal": salario_semanal,
-                }
-                st.session_state.empleados.append(nuevo_emp)
-                st.success(
-                    f"¡Guardia {nombre} registrado correctamente con NSS {nss}!"
+        if submitted_cot:
+            st.session_state.cotizacion_generada = True
+            st.session_state.empresa_cliente = empresa_cliente
+            st.session_state.contacto_cliente = contacto_cliente
+            st.session_state.fecha_cot = fecha_cot
+            st.session_state.cantidad_guardias = cantidad_guardias
+            st.session_state.precio_unitario = precio_unitario
+
+    # Generación del documento Word con Marca de Agua Real de Fondo y Estilo Dorado/Negro
+    if st.session_state.get("cotizacion_generada", False):
+        subtotal = (
+            st.session_state.cantidad_guardias
+            * st.session_state.precio_unitario
+        )
+        iva = subtotal * 0.16
+        total = subtotal + iva
+
+        doc_cot = Document()
+
+        # Márgenes limpios de página
+        for section in doc_cot.sections:
+            section.top_margin = Inches(1.2)
+            section.bottom_margin = Inches(1.2)
+            section.left_margin = Inches(1.2)
+            section.right_margin = Inches(1.2)
+
+        # INSERCIÓN DE MARCA DE AGUA REAL EN EL ENCABEZADO (Detrás del texto, centrada y grande)
+        if os.path.exists("logo.png"):
+            header = doc_cot.sections[0].header
+            hp = header.paragraphs[0]
+            hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            hrun = hp.add_run()
+            # Insertamos la imagen dimensionada para que abarque el fondo de la hoja con sutileza
+            inline_shape = hrun.add_picture("logo.png", width=Inches(4.8))
+
+            # Aplicar XML para mover la imagen al fondo (detrás del texto / marca de agua)
+            inline = inline_shape._inline
+            effectExtent = parse_xml(
+                r'<wp:effectExtent %s l="0" t="0" r="0" b="0"/>'
+                % nsdecls("wp")
+            )
+            inline.append(effectExtent)
+
+        # Definir Colores Corporativos
+        COLOR_DORADO = RGBColor(197, 155, 39)  # #C59B27
+        COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)  # #141414
+        COLOR_GRIS_TEXTO = RGBColor(80, 80, 80)
+
+        # Encabezado corporativo principal
+        p_emp = doc_cot.add_paragraph()
+        p_emp.paragraph_format.space_after = Pt(2)
+        run_emp_1 = p_emp.add_run("AVM GRUPO INTEGRAL ")
+        run_emp_1.bold = True
+        run_emp_1.font.size = Pt(15)
+        run_emp_1.font.color.rgb = COLOR_NEGRO_SUAVE
+
+        run_emp_2 = p_emp.add_run(
+            "DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V.\n"
+        )
+        run_emp_2.bold = True
+        run_emp_2.font.size = Pt(15)
+        run_emp_2.font.color.rgb = COLOR_DORADO
+
+        p_dir = doc_cot.add_paragraph()
+        p_dir.paragraph_format.space_after = Pt(12)
+        run_dir = p_dir.add_run(
+            "SANTA BÁRBARA NÚMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUÁREZ, NUEVO LEÓN"
+        )
+        run_dir.font.size = Pt(8.5)
+        run_dir.font.color.rgb = COLOR_GRIS_TEXTO
+
+        # Línea divisoria dorada
+        p_line = doc_cot.add_paragraph()
+        p_line.paragraph_format.space_after = Pt(12)
+        r_line = p_line.add_run(
+            "_________________________________________________________________________________"
+        )
+        r_line.font.size = Pt(9)
+        r_line.font.color.rgb = COLOR_DORADO
+
+        # Título de Propuesta Económica
+        p_prop = doc_cot.add_paragraph()
+        p_prop.paragraph_format.space_after = Pt(10)
+        run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
+        run_prop.bold = True
+        run_prop.font.size = Pt(13)
+        run_prop.font.color.rgb = COLOR_DORADO
+
+        # Datos del cliente
+        p_datos = doc_cot.add_paragraph()
+        p_datos.paragraph_format.space_after = Pt(15)
+        p_datos.add_run(f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n")
+        p_datos.add_run(f"CLIENTE:                  {st.session_state.empresa_cliente}\n")
+        p_datos.add_run(f"ATENCIÓN:               {st.session_state.contacto_cliente}\n")
+        for run in p_datos.runs:
+            run.font.size = Pt(10)
+            run.bold = True
+            run.font.color.rgb = COLOR_NEGRO_SUAVE
+
+        # Análisis de Situación
+        h2_1 = doc_cot.add_heading(level=2)
+        h2_1.paragraph_format.space_before = Pt(8)
+        h2_1.paragraph_format.space_after = Pt(4)
+        r_h2_1 = h2_1.add_run("ANÁLISIS DE SITUACIÓN:")
+        r_h2_1.font.size = Pt(12)
+        r_h2_1.font.color.rgb = COLOR_DORADO
+
+        p_analisis = doc_cot.add_paragraph(
+            "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal[cite: 10]."
+        )
+        p_analisis.paragraph_format.space_after = Pt(12)
+        p_analisis.runs[0].font.size = Pt(10)
+        p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
+
+        # Detalle de Cotización (Tabla)
+        h2_2 = doc_cot.add_heading(level=2)
+        h2_2.paragraph_format.space_before = Pt(8)
+        h2_2.paragraph_format.space_after = Pt(6)
+        r_h2_2 = h2_2.add_run("DETALLE DE COTIZACIÓN:")
+        r_h2_2.font.size = Pt(12)
+        r_h2_2.font.color.rgb = COLOR_DORADO
+
+        table = doc_cot.add_table(rows=2, cols=5)
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+        headers = [
+            "CANT.",
+            "CATEGORÍA",
+            "DESCRIPCIÓN DEL SERVICIO",
+            "PRECIO UNITARIO",
+            "TOTAL MENSUAL",
+        ]
+        hdr_cells = table.rows[0].cells
+        for i, header_text in enumerate(headers):
+            hdr_cells[i].text = header_text
+            for paragraph in hdr_cells[i].paragraphs:
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for run in paragraph.runs:
+                    run.font.bold = True
+                    run.font.size = Pt(9)
+                    run.font.color.rgb = RGBColor(255, 255, 255)
+            shading = OxmlElement("w:shd")
+            shading.set(qn("w:val"), "clear")
+            shading.set(qn("w:color"), "auto")
+            shading.set(qn("w:fill"), "C59B27")
+            hdr_cells[i]._tc.get_or_add_tcPr().append(shading)
+
+        row_cells = table.rows[1].cells
+        row_cells[0].text = str(st.session_state.cantidad_guardias)
+        row_cells[1].text = "Guardias Intramuro / Control de Accesos"
+        row_cells[2].text = (
+            "Control estricto de acceso peatonal y vehicular "
+            "(empleados, contratistas, proveedores y transporte pesado). Turno de 12 horas."
+        )
+        row_cells[3].text = f"${st.session_state.precio_unitario:,.2f}"
+        row_cells[4].text = f"${subtotal:,.2f}"
+
+        for i, cell in enumerate(row_cells):
+            for paragraph in cell.paragraphs:
+                if i in [0, 3, 4]:
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                for run in paragraph.runs:
+                    run.font.size = Pt(9)
+                    run.font.color.rgb = COLOR_NEGRO_SUAVE
+
+        # Totales
+        p_totales = doc_cot.add_paragraph()
+        p_totales.paragraph_format.space_before = Pt(8)
+        p_totales.paragraph_format.space_after = Pt(12)
+        p_totales.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p_totales.add_run(f"Subtotal: ${subtotal:,.2f}\n")
+        p_totales.add_run(f"IVA (16%): ${iva:,.2f}\n")
+        r_tot = p_totales.add_run(f"TOTAL MENSUAL: ${total:,.2f}")
+        r_tot.bold = True
+        r_tot.font.size = Pt(11)
+        r_tot.font.color.rgb = COLOR_DORADO
+
+        for run in p_totales.runs:
+            if run != r_tot:
+                run.font.size = Pt(9.5)
+                run.font.color.rgb = COLOR_NEGRO_SUAVE
+
+        # Términos y Condiciones
+        h2_3 = doc_cot.add_heading(level=2)
+        h2_3.paragraph_format.space_before = Pt(8)
+        h2_3.paragraph_format.space_after = Pt(6)
+        r_h2_3 = h2_3.add_run("TÉRMINOS Y CONDICIONES COMERCIALES:")
+        r_h2_3.font.size = Pt(12)
+        r_h2_3.font.color.rgb = COLOR_DORADO
+
+        terminos = [
+            (
+                "1. Responsabilidad Civil y Patronal:",
+                "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes[cite: 10].",
+            ),
+            (
+                "2. Garantía de Continuidad:",
+                "Nos comprometemos a mantener la cobertura del servicio al 100%. Sustitución en menos de 90 minutos por personal de retén[cite: 10].",
+            ),
+            (
+                "3. Confidencialidad Rigurosa:",
+                "Todo el personal asignado cuenta con estrictos contratos de confidencialidad para proteger las operaciones del cliente[cite: 10].",
+            ),
+            (
+                "4. Vigencia de la Propuesta:",
+                "La presente cotización tiene una validez de 15 días naturales a partir de su emisión[cite: 10].",
+            ),
+            (
+                "5. Condiciones de Pago:",
+                "Facturación mensual liquidable dentro de los primeros 5 días naturales de cada mes[cite: 10].",
+            ),
+        ]
+
+        for titulo, desc in terminos:
+            p_term = doc_cot.add_paragraph()
+            p_term.paragraph_format.space_after = Pt(3)
+            r_t = p_term.add_run(titulo + " ")
+            r_t.bold = True
+            r_t.font.size = Pt(9.5)
+            r_t.font.color.rgb = COLOR_DORADO
+
+            r_d = p_term.add_run(desc)
+            r_d.font.size = Pt(9.5)
+            r_d.font.color.rgb = COLOR_NEGRO_SUAVE
+
+        # Eslogan final
+        p_pie = doc_cot.add_paragraph()
+        p_pie.paragraph_format.space_before = Pt(15)
+        p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_pie = p_pie.add_run(
+            '"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
+        )
+        r_pie.italic = True
+        r_pie.font.size = Pt(9)
+        r_pie.font.color.rgb = COLOR_DORADO
+
+        buffer_cot = BytesIO()
+        doc_cot.save(buffer_cot)
+        buffer_cot.seek(0)
+
+        st.success(
+            "¡Cotización generada con éxito con marca de agua real de hoja y diseño ejecutivo!"
+        )
+        st.download_button(
+            label="📥 Descargar Propuesta Económica en Word (Marca de Agua Real)",
+            data=buffer_cot,
+            file_name=f"Cotizacion_AVM_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+
+else:
+    # --- MÓDULO DE RECURSOS HUMANOS Y CONTRATOS ---
+    if menu_hr == "Registro de Personal":
+        st.header("📝 Registro de Nuevo Elemento / Guardia")
+
+        with st.form("form_empleado"):
+            col1, col2 = st.columns(2)
+
+            with col1:
+                nombre = st.text_input("Nombre Completo del Trabajador")
+                nacionalidad = st.text_input("Nacionalidad", value="Mexicana")
+                sexo = st.selectbox("Sexo", ["Masculino", "Femenino"])
+                fecha_nacimiento = st.text_input(
+                    "Fecha de Nacimiento (ej. 15/05/1995)"
                 )
-            else:
-                st.error("Por favor ingresa al menos el Nombre y la CURP.")
+                estado_civil = st.selectbox(
+                    "Estado Civil", ["Soltero/a", "Casado/a", "Viudo/a"]
+                )
 
-    if len(st.session_state.empleados) > 0:
-        st.subheader("📋 Personal Registrado Recientemente")
-        df = pd.DataFrame(st.session_state.empleados)
-        st.dataframe(df)
+            with col2:
+                curp = st.text_input("CURP")
+                rfc = st.text_input("RFC")
+                nss = st.text_input(
+                    "NSS (Número de Seguridad Social - 11 dígitos)"
+                )
+                domicilio = st.text_area("Domicilio Completo")
+                puesto = st.text_input("Puesto", value="GUARDIA DE SEGURIDAD")
+                salario_semanal = st.text_input(
+                    "Salario Semanal (ej. $2,103.85)", value="$2,103.85"
+                )
 
+            submitted = st.form_submit_button("Guardar Empleado")
 
-elif menu == "Generar Contrato Sujeto a Prueba":
-    st.header("📄 Generador de Contrato - Sujeto a Prueba (30 Días)")
+            if submitted:
+                if nombre and curp:
+                    nuevo_emp = {
+                        "nombre": nombre,
+                        "nacionalidad": nacionalidad,
+                        "sexo": sexo,
+                        "fecha_nacimiento": fecha_nacimiento,
+                        "estado_civil": estado_civil,
+                        "curp": curp,
+                        "rfc": rfc,
+                        "nss": nss,
+                        "domicilio": domicilio,
+                        "puesto": puesto,
+                        "salario_semanal": salario_semanal,
+                    }
+                    st.session_state.empleados.append(nuevo_emp)
+                    st.success(
+                        f"¡Guardia {nombre} registrado correctamente con NSS {nss}!"
+                    )
+                else:
+                    st.error(
+                        "Por favor ingresa al menos el Nombre y la CURP."
+                    )
 
-    if not st.session_state.empleados:
-        st.warning(
-            "⚠️ Primero registra un empleado en la sección 'Registro de Personal'."
+        if len(st.session_state.empleados) > 0:
+            st.subheader("📋 Personal Registrado Recientemente")
+            df = pd.DataFrame(st.session_state.empleados)
+            st.dataframe(df)
+
+    elif menu_hr == "Generar Contrato Sujeto a Prueba":
+        st.header(
+            "📄 Generador de Contrato - Sujeto a Prueba (30 Días)"
         )
-    else:
-        nombres_empleados = [e["nombre"] for e in st.session_state.empleados]
-        emp_seleccionado = st.selectbox(
-            "Selecciona al Trabajador", nombres_empleados
-        )
-        datos = next(
-            e
-            for e in st.session_state.empleados
-            if e["nombre"] == emp_seleccionado
-        )
 
-        if st.button("📥 Descargar Contrato Sujeto a Prueba (Word)"):
-            doc = Document()
-            doc.add_heading(
-                "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA",
-                level=1,
+        if not st.session_state.empleados:
+            st.warning(
+                "⚠️ Primero registra un empleado en la sección 'Registro de Personal'."
+            )
+        else:
+            nombres_empleados = [
+                e["nombre"] for e in st.session_state.empleados
+            ]
+            emp_seleccionado = st.selectbox(
+                "Selecciona al Trabajador", nombres_empleados
+            )
+            datos = next(
+                e
+                for e in st.session_state.empleados
+                if e["nombre"] == emp_seleccionado
             )
 
-            texto_prueba = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 39-A, 39-B, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
+            if st.button("📥 Descargar Contrato Sujeto a Prueba (Word)"):
+                doc = Document()
+                doc.add_heading(
+                    "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA",
+                    level=1,
+                )
+
+                texto_prueba = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 39-A, 39-B, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
 
 D E C L A R A C I O N E S:
 
@@ -282,48 +586,49 @@ EL TRABAJADOR
 __________________________________
 """
 
-            for parrafo in texto_prueba.split("\n\n"):
-                if parrafo.strip():
-                    doc.add_paragraph(parrafo.strip())
+                for parrafo in texto_prueba.split("\n\n"):
+                    if parrafo.strip():
+                        doc.add_paragraph(parrafo.strip())
 
-            buffer = BytesIO()
-            doc.save(buffer)
-            buffer.seek(0)
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
 
-            st.download_button(
-                label="📥 Clic aquí para descargar el Word listo",
-                data=buffer,
-                file_name=f"Contrato_Prueba_{datos['nombre'].replace(' ', '_')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                st.download_button(
+                    label="📥 Clic aquí para descargar el Word listo",
+                    data=buffer,
+                    file_name=f"Contrato_Prueba_{datos['nombre'].replace(' ', '_')}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+
+    elif menu_hr == "Generar Contrato Tiempo Indeterminado":
+        st.header("📄 Generador de Contrato - Tiempo Indeterminado")
+
+        if not st.session_state.empleados:
+            st.warning(
+                "⚠️ Primero registra un empleado en la sección 'Registro de Personal'."
+            )
+        else:
+            nombres_empleados = [
+                e["nombre"] for e in st.session_state.empleados
+            ]
+            emp_seleccionado = st.selectbox(
+                "Selecciona al Trabajador", nombres_empleados
+            )
+            datos = next(
+                e
+                for e in st.session_state.empleados
+                if e["nombre"] == emp_seleccionado
             )
 
+            if st.button("📥 Descargar Contrato Indeterminado (Word)"):
+                doc = Document()
+                doc.add_heading(
+                    "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO",
+                    level=1,
+                )
 
-elif menu == "Generar Contrato Tiempo Indeterminado":
-    st.header("📄 Generador de Contrato - Tiempo Indeterminado")
-
-    if not st.session_state.empleados:
-        st.warning(
-            "⚠️ Primero registra un empleado en la sección 'Registro de Personal'."
-        )
-    else:
-        nombres_empleados = [e["nombre"] for e in st.session_state.empleados]
-        emp_seleccionado = st.selectbox(
-            "Selecciona al Trabajador", nombres_empleados
-        )
-        datos = next(
-            e
-            for e in st.session_state.empleados
-            if e["nombre"] == emp_seleccionado
-        )
-
-        if st.button("📥 Descargar Contrato Indeterminado (Word)"):
-            doc = Document()
-            doc.add_heading(
-                "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO",
-                level=1,
-            )
-
-            texto_indet = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
+                texto_indet = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
 
 D E C L A R A C I O N E S:
 
@@ -416,499 +721,17 @@ EL TRABAJADOR
 __________________________________
 """
 
-            for parrafo in texto_indet.split("\n\n"):
-                if parrafo.strip():
-                    doc.add_paragraph(parrafo.strip())
+                for parrafo in texto_indet.split("\n\n"):
+                    if parrafo.strip():
+                        doc.add_paragraph(parrafo.strip())
 
-            buffer = BytesIO()
-            doc.save(buffer)
-            buffer.seek(0)
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
 
-            st.download_button(
-                label="📥 Clic aquí para descargar el Word listo",
-                data=buffer,
-                file_name=f"Contrato_Indeterminado_{datos['nombre'].replace(' ', '_')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
-
-
-elif menu == "Generador de Cotizaciones":
-    st.header("📊 Módulo Comercial - Generador de Cotizaciones para Clientes")
-
-    with st.form("form_cotizacion"):
-        col1, col2 = st.columns(2)
-        with col1:
-            empresa_cliente = st.text_input(
-                "Nombre de la Empresa Cliente", value="CROMIN DE MEXICO"
-            )
-            contacto_cliente = st.text_input(
-                "Nombre del Contacto / Comprador", value="LIC CRISTINA LIERA"
-            )
-            fecha_cot = st.text_input("Fecha de Emisión", value="11/09/2026")
-        with col2:
-            cantidad_guardias = st.number_input(
-                "Cantidad de Guardias", min_value=1, max_value=50, value=2
-            )
-            precio_unitario = st.number_input(
-                "Precio Unitario Mensual por Guardia ($)",
-                min_value=0.0,
-                value=21551.0,
-                step=100.0,
-            )
-
-        submitted_cot = st.form_submit_button(
-            "⚙️ Generar Propuesta Económica"
-        )
-
-        if submitted_cot:
-            st.session_state.cotizacion_generada = True
-            st.session_state.empresa_cliente = empresa_cliente
-            st.session_state.contacto_cliente = contacto_cliente
-            st.session_state.fecha_cot = fecha_cot
-            st.session_state.cantidad_guardias = cantidad_guardias
-            st.session_state.precio_unitario = precio_unitario
-
-    # Botón de descarga con diseño corporativo avanzado (Marca de agua, Títulos Dorados y Negros)
-    if st.session_state.get("cotizacion_generada", False):
-        subtotal = (
-            st.session_state.cantidad_guardias
-            * st.session_state.precio_unitario
-        )
-        iva = subtotal * 0.16
-        total = subtotal + iva
-
-        doc_cot = Document()
-
-        # Configurar márgenes de página
-        sections = doc_cot.sections
-        for section in sections:
-            section.top_margin = Inches(1)
-            section.bottom_margin = Inches(1)
-            section.left_margin = Inches(1)
-            section.right_margin = Inches(1)
-
-        # Inserción del logotipo como Marca de Agua sutil en el pie/encabezado de la primera sección
-        if os.path.exists("logo.png"):
-            header = sections[0].header
-            p_水印 = header.paragraphs[0]
-            p_水印.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            run_wm = p_水印.add_run()
-            # Añadimos el logo pequeño y sutil en el fondo/encabezado
-            run_wm.add_picture("logo.png", width=Inches(0.8))
-
-        # Definir Colores Corporativos Exactos
-        COLOR_DORADO = RGBColor(212, 175, 55)  # #D4AF37
-        COLOR_NEGRO_SUAVE = RGBColor(30, 30, 30)  # #1E1E1E
-
-        # Título principal de la empresa con combinación negro/dorado
-        p_emp = doc_cot.add_paragraph()
-        run_emp_1 = p_emp.add_run("AVM GRUPO INTEGRAL ")
-        run_emp_1.bold = True
-        run_emp_1.font.size = Pt(14)
-        run_emp_1.font.color.rgb = COLOR_NEGRO_SUAVE
-
-        run_emp_2 = p_emp.add_run("DE SEGURIDAD PRIVADA DEL NORTE, SA DE CV\n")
-        run_emp_2.bold = True
-        run_emp_2.font.size = Pt(14)
-        run_emp_2.font.color.rgb = COLOR_DORADO
-
-        p_dir = doc_cot.add_paragraph()
-        run_dir = p_dir.add_run(
-            "SANTA BARBARA NUMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUAREZ, NUEVO LEON\n\n"
-        )
-        run_dir.font.size = Pt(9)
-        run_dir.font.color.rgb = RGBColor(100, 100, 100)
-
-        # Título de Propuesta Económica grande y elegante en Dorado
-        p_prop = doc_cot.add_paragraph()
-        run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
-        run_prop.bold = True
-        run_prop.font.size = Pt(13)
-        run_prop.font.color.rgb = COLOR_DORADO
-
-        # Datos generales del cliente
-        p_datos = doc_cot.add_paragraph()
-        p_datos.add_run(f"FECHA:\t\t{st.session_state.fecha_cot}\n")
-        p_datos.add_run(f"EMPRESA:\t{st.session_state.empresa_cliente}\n")
-        p_datos.add_run(f"CONTACTO:\t{st.session_state.contacto_cliente}\n")
-        for run in p_datos.runs:
-            run.font.size = Pt(10)
-            run.bold = True
-            run.font.color.rgb = COLOR_NEGRO_SUAVE
-
-        # Análisis de situación (Título grande en Dorado)
-        h2_1 = doc_cot.add_heading(level=2)
-        r_h2_1 = h2_1.add_run("ANÁLISIS DE SITUACIÓN:")
-        r_h2_1.font.size = Pt(12)
-        r_h2_1.font.color.rgb = COLOR_DORADO
-
-        p_analisis = doc_cot.add_paragraph(
-            "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal[cite: 10]."
-        )
-        p_analisis.runs[0].font.size = Pt(10)
-        p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
-
-        # Tabla de Cotización profesional con cabecera en Dorado y Negro
-        h2_2 = doc_cot.add_heading(level=2)
-        r_h2_2 = h2_2.add_run("DETALLE DE COTIZACIÓN")
-        r_h2_2.font.size = Pt(12)
-        r_h2_2.font.color.rgb = COLOR_DORADO
-
-        table = doc_cot.add_table(rows=2, cols=5)
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-        headers = [
-            "CANTIDAD",
-            "CATEGORÍA",
-            "DESCRIPCIÓN DEL SERVICIO",
-            "PRECIO UNITARIO",
-            "TOTAL MENSUAL",
-        ]
-        hdr_cells = table.rows[0].cells
-        for i, header_text in enumerate(headers):
-            hdr_cells[i].text = header_text
-            for paragraph in hdr_cells[i].paragraphs:
-                for run in paragraph.runs:
-                    run.font.bold = True
-                    run.font.size = Pt(9.5)
-                    run.font.color.rgb = RGBColor(
-                        255, 255, 255
-                    )  # Letras blancas sobre fondo dorado/negro
-            # Fondo de celda en tono dorado elegante #D4AF37
-            shading = OxmlElement("w:shd")
-            shading.set(qn("w:val"), "clear")
-            shading.set(qn("w:color"), "auto")
-            shading.set(qn("w:fill"), "D4AF37")
-            hdr_cells[i]._tc.get_or_add_tcPr().append(shading)
-
-        # Fila de datos
-        row_cells = table.rows[1].cells
-        row_cells[0].text = str(st.session_state.cantidad_guardias)
-        row_cells[1].text = "Guardias Intramuro o extramuro (Control de Accesos y Caseta)"
-        row_cells[2].text = (
-            "Control estricto de acceso peatonal y vehicular (empleados, contratistas, "
-            "proveedores y transporte pesado). Turno de 12 horas"
-        )
-        row_cells[3].text = f"${st.session_state.precio_unitario:,.2f}"
-        row_cells[4].text = f"${subtotal:,.2f}"
-
-        for cell in row_cells:
-            for paragraph in cell.paragraphs:
-                for run in paragraph.runs:
-                    run.font.size = Pt(9)
-                    run.font.color.rgb = COLOR_NEGRO_SUAVE
-
-        # Totales debajo de la tabla
-        p_totales = doc_cot.add_paragraph()
-        p_totales.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        p_totales.add_run(f"\nSubtotal: ${subtotal:,.2f}\n")
-        p_totales.add_run(f"IVA (16%): ${iva:,.2f}\n")
-        r_tot = p_totales.add_run(f"TOTAL: ${total:,.2f}")
-        r_tot.bold = True
-        r_tot.font.size = Pt(12)
-        r_tot.font.color.rgb = COLOR_DORADO
-
-        for run in p_totales.runs:
-            if run != r_tot:
-                run.font.size = Pt(10)
-                run.font.color.rgb = COLOR_NEGRO_SUAVE
-
-        # Términos y Condiciones (Títulos grandes y en dorado)
-        h2_3 = doc_cot.add_heading(level=2)
-        r_h2_3 = h2_3.add_run("TÉRMINOS Y CONDICIONES COMERCIALES:")
-        r_h2_3.font.size = Pt(12)
-        r_h2_3.font.color.rgb = COLOR_DORADO
-
-        terminos = [
-            (
-                "1. Responsabilidad Civil y Patronal:",
-                "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes. El cliente queda exento de cualquier responsabilidad solidaria, ya que todo el personal operativo depende directamente de nuestra razón social[cite: 10].",
-            ),
-            (
-                "2. Garantía de Continuidad (Reemplazo Inmediato):",
-                "Nos comprometemos a mantener la cobertura del servicio al 100%. En caso de ausencias por enfermedad, trámites administrativos o causas de fuerza mayor, el elemento será sustituido en un periodo no mayor a 90 minutos por personal de nuestro equipo de retén[cite: 10].",
-            ),
-            (
-                "3. Confidencialidad Rigurosa:",
-                "Todo el personal asignado cuenta con contratos de confidencialidad vigentes. Nuestra empresa se obliga a no divulgar información sensible, procesos internos o vulnerabilidades detectadas en las instalaciones del cliente[cite: 10].",
-            ),
-            (
-                "4. Vigencia de la Oferta:",
-                "La presente propuesta económica tiene una validez de 15 días naturales a partir de su fecha de emisión, debido a posibles ajustes en tabuladores de costos operativos[cite: 10].",
-            ),
-            (
-                "5. Condiciones de Pago:",
-                "Los servicios serán facturados de manera mensual y deberán ser liquidados dentro de los primeros 5 días naturales de cada mes para garantizar el flujo operativo y el cumplimiento puntual de sueldos del personal[cite: 10].",
-            ),
-        ]
-
-        for titulo, desc in terminos:
-            p_term = doc_cot.add_paragraph()
-            r_t = p_term.add_run(titulo + " ")
-            r_t.bold = True
-            r_t.font.size = Pt(9.5)
-            r_t.font.color.rgb = COLOR_DORADO  # Títulos de términos en dorado
-
-            r_d = p_term.add_run(desc)
-            r_d.font.size = Pt(9.5)
-            r_d.font.color.rgb = COLOR_NEGRO_SUAVE
-
-        # Eslogan final
-        p_pie = doc_cot.add_paragraph()
-        p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r_pie = p_pie.add_run(
-            '\n"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
-        )
-        r_pie.italic = True
-        r_pie.font.size = Pt(9.5)
-        r_pie.font.color.rgb = COLOR_DORADO
-
-        buffer_cot = BytesIO()
-        doc_cot.save(buffer_cot)
-        buffer_cot.seek(0)
-
-        st.success(
-            "¡Cotización generada con éxito con diseño ejecutivo, marca de agua y estilo dorado!"
-        )
-        st.download_button(
-            label="📥 Descargar Propuesta Económica en Word (Estilo Ejecutivo Dorado)",
-            data=buffer_cot,
-            file_name=f"Cotizacion_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        )
-# Botón de descarga con diseño ejecutivo avanzado (Marca de agua de fondo completo y diseño negro/dorado)
-        if st.session_state.get("cotizacion_generada", False):
-            subtotal = (
-                st.session_state.cantidad_guardias
-                * st.session_state.precio_unitario
-            )
-            iva = subtotal * 0.16
-            total = subtotal + iva
-
-            doc_cot = Document()
-
-            # Configurar márgenes de página limpios
-            sections = doc_cot.sections
-            for section in sections:
-                section.top_margin = Inches(1.2)
-                section.bottom_margin = Inches(1.2)
-                section.left_margin = Inches(1.2)
-                section.right_margin = Inches(1.2)
-
-            # INSERCIÓN DE MARCA DE AGUA EN EL ENCABEZADO (Abarcando el fondo central)
-            if os.path.exists("logo.png"):
-                header = sections[0].header
-                p_wm = header.paragraphs[0]
-                p_wm.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_wm = p_wm.add_run()
-                # Tamaño grande centrado en el fondo (aprox 4.5 pulgadas de ancho)
-                run_wm.add_picture("logo.png", width=Inches(4.5))
-
-            # Definir Colores Corporativos Exactos
-            COLOR_DORADO = RGBColor(197, 155, 39)  # Dorado ejecutivo intenso
-            COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)  # Negro elegante
-            COLOR_GRIS_TEXTO = RGBColor(70, 70, 70)  # Gris institucional
-
-            # Encabezado principal de la empresa (Combinación Negro y Dorado)
-            p_emp = doc_cot.add_paragraph()
-            p_emp.paragraph_format.space_after = Pt(2)
-            run_emp_1 = p_emp.add_run("AVM GRUPO INTEGRAL ")
-            run_emp_1.bold = True
-            run_emp_1.font.size = Pt(16)
-            run_emp_1.font.color.rgb = COLOR_NEGRO_SUAVE
-
-            run_emp_2 = p_emp.add_run(
-                "DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V.\n"
-            )
-            run_emp_2.bold = True
-            run_emp_2.font.size = Pt(16)
-            run_emp_2.font.color.rgb = COLOR_DORADO
-
-            p_dir = doc_cot.add_paragraph()
-            p_dir.paragraph_format.space_after = Pt(15)
-            run_dir = p_dir.add_run(
-                "SANTA BÁRBARA NÚMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUÁREZ, NUEVO LEÓN"
-            )
-            run_dir.font.size = Pt(8.5)
-            run_dir.font.color.rgb = COLOR_GRIS_TEXTO
-
-            # Línea divisoria decorativa dorada
-            p_line = doc_cot.add_paragraph()
-            p_line.paragraph_format.space_after = Pt(15)
-            r_line = p_line.add_run(
-                "_________________________________________________________________________________"
-            )
-            r_line.font.size = Pt(9)
-            r_line.font.color.rgb = COLOR_DORADO
-
-            # Título de Propuesta Económica (Grande y Dorado)
-            p_prop = doc_cot.add_paragraph()
-            p_prop.paragraph_format.space_after = Pt(12)
-            run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
-            run_prop.bold = True
-            run_prop.font.size = Pt(13)
-            run_prop.font.color.rgb = COLOR_DORADO
-
-            # Datos generales del cliente con formato ejecutivo
-            p_datos = doc_cot.add_paragraph()
-            p_datos.paragraph_format.space_after = Pt(15)
-            p_datos.add_run(f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n")
-            p_datos.add_run(f"CLIENTE:                  {st.session_state.empresa_cliente}\n")
-            p_datos.add_run(f"ATENCIÓN:               {st.session_state.contacto_cliente}\n")
-            for run in p_datos.runs:
-                run.font.size = Pt(10)
-                run.bold = True
-                run.font.color.rgb = COLOR_NEGRO_SUAVE
-
-            # Análisis de Situación
-            h2_1 = doc_cot.add_heading(level=2)
-            h2_1.paragraph_format.space_before = Pt(10)
-            h2_1.paragraph_format.space_after = Pt(4)
-            r_h2_1 = h2_1.add_run("ANÁLISIS DE SITUACIÓN:")
-            r_h2_1.font.size = Pt(12)
-            r_h2_1.font.color.rgb = COLOR_DORADO
-
-            p_analisis = doc_cot.add_paragraph(
-                "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal[cite: 10]."
-            )
-            p_analisis.paragraph_format.space_after = Pt(15)
-            p_analisis.runs[0].font.size = Pt(10)
-            p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
-
-            # Detalle de Cotización
-            h2_2 = doc_cot.add_heading(level=2)
-            h2_2.paragraph_format.space_before = Pt(10)
-            h2_2.paragraph_format.space_after = Pt(6)
-            r_h2_2 = h2_2.add_run("DETALLE DE COTIZACIÓN:")
-            r_h2_2.font.size = Pt(12)
-            r_h2_2.font.color.rgb = COLOR_DORADO
-
-            table = doc_cot.add_table(rows=2, cols=5)
-            table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-            headers = [
-                "CANT.",
-                "CATEGORÍA",
-                "DESCRIPCIÓN DEL SERVICIO",
-                "PRECIO UNITARIO",
-                "TOTAL MENSUAL",
-            ]
-            hdr_cells = table.rows[0].cells
-            for i, header_text in enumerate(headers):
-                hdr_cells[i].text = header_text
-                for paragraph in hdr_cells[i].paragraphs:
-                    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    for run in paragraph.runs:
-                        run.font.bold = True
-                        run.font.size = Pt(9)
-                        run.font.color.rgb = RGBColor(255, 255, 255)
-                # Fondo de celda en Dorado Intenso
-                shading = OxmlElement("w:shd")
-                shading.set(qn("w:val"), "clear")
-                shading.set(qn("w:color"), "auto")
-                shading.set(qn("w:fill"), "C59B27")
-                hdr_cells[i]._tc.get_or_add_tcPr().append(shading)
-
-            # Fila de datos con estilo limpio
-            row_cells = table.rows[1].cells
-            row_cells[0].text = str(st.session_state.cantidad_guardias)
-            row_cells[1].text = "Guardias Intramuro / Control de Accesos"
-            row_cells[2].text = (
-                "Control estricto de acceso peatonal y vehicular "
-                "(empleados, contratistas, proveedores y transporte pesado). Turno de 12 horas."
-            )
-            row_cells[3].text = f"${st.session_state.precio_unitario:,.2f}"
-            row_cells[4].text = f"${subtotal:,.2f}"
-
-            for i, cell in enumerate(row_cells):
-                for paragraph in cell.paragraphs:
-                    if i in [0, 3, 4]:
-                        paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                    for run in paragraph.runs:
-                        run.font.size = Pt(9)
-                        run.font.color.rgb = COLOR_NEGRO_SUAVE
-
-            # Totales alineados elegantemente
-            p_totales = doc_cot.add_paragraph()
-            p_totales.paragraph_format.space_before = Pt(10)
-            p_totales.paragraph_format.space_after = Pt(15)
-            p_totales.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            p_totales.add_run(f"Subtotal: ${subtotal:,.2f}\n")
-            p_totales.add_run(f"IVA (16%): ${iva:,.2f}\n")
-            r_tot = p_totales.add_run(f"TOTAL MENSUAL: ${total:,.2f}")
-            r_tot.bold = True
-            r_tot.font.size = Pt(11.5)
-            r_tot.font.color.rgb = COLOR_DORADO
-
-            for run in p_totales.runs:
-                if run != r_tot:
-                    run.font.size = Pt(9.5)
-                    run.font.color.rgb = COLOR_NEGRO_SUAVE
-
-            # Términos y Condiciones
-            h2_3 = doc_cot.add_heading(level=2)
-            h2_3.paragraph_format.space_before = Pt(10)
-            h2_3.paragraph_format.space_after = Pt(6)
-            r_h2_3 = h2_3.add_run("TÉRMINOS Y CONDICIONES COMERCIALES:")
-            r_h2_3.font.size = Pt(12)
-            r_h2_3.font.color.rgb = COLOR_DORADO
-
-            terminos = [
-                (
-                    "1. Responsabilidad Civil y Patronal:",
-                    "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes. El cliente queda exento de cualquier responsabilidad solidaria[cite: 10].",
-                ),
-                (
-                    "2. Garantía de Continuidad:",
-                    "Nos comprometemos a mantener la cobertura del servicio al 100%. En caso de ausencias imprevistas, el elemento será sustituido en un periodo menor a 90 minutos por personal de retén[cite: 10].",
-                ),
-                (
-                    "3. Confidencialidad Rigurosa:",
-                    "Todo el personal asignado cuenta con contratos de confidencialidad estrictos para proteger las operaciones e instalaciones del cliente[cite: 10].",
-                ),
-                (
-                    "4. Vigencia de la Propuesta:",
-                    "La presente cotización tiene una validez de 15 días naturales a partir de su fecha de emisión[cite: 10].",
-                ),
-                (
-                    "5. Condiciones de Pago:",
-                    "Los servicios se facturan mensualmente y deben liquidarse dentro de los primeros 5 días naturales de cada mes[cite: 10].",
-                ),
-            ]
-
-            for titulo, desc in terminos:
-                p_term = doc_cot.add_paragraph()
-                p_term.paragraph_format.space_after = Pt(4)
-                r_t = p_term.add_run(titulo + " ")
-                r_t.bold = True
-                r_t.font.size = Pt(9.5)
-                r_t.font.color.rgb = COLOR_DORADO
-
-                r_d = p_term.add_run(desc)
-                r_d.font.size = Pt(9.5)
-                r_d.font.color.rgb = COLOR_NEGRO_SUAVE
-
-            # Eslogan corporativo final
-            p_pie = doc_cot.add_paragraph()
-            p_pie.paragraph_format.space_before = Pt(20)
-            p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            r_pie = p_pie.add_run(
-                '"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
-            )
-            r_pie.italic = True
-            r_pie.font.size = Pt(9)
-            r_pie.font.color.rgb = COLOR_DORADO
-
-            buffer_cot = BytesIO()
-            doc_cot.save(buffer_cot)
-            buffer_cot.seek(0)
-
-            st.success(
-                "¡Cotización optimizada con éxito con marca de agua centrada en el fondo y diseño ejecutivo dorado/negro!"
-            )
-            st.download_button(
-                label="📥 Descargar Propuesta Económica Ejecutiva (Word)",
-                data=buffer_cot,
-                file_name=f"Cotizacion_Ejecutiva_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
+                st.download_button(
+                    label="📥 Clic aquí para descargar el Word listo",
+                    data=buffer,
+                    file_name=f"Contrato_Indeterminado_{datos['nombre'].replace(' ', '_')}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
