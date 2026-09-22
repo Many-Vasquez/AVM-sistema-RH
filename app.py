@@ -188,8 +188,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             hrun = hp.add_run()
             hrun.add_picture(
                 logo_path, width=Inches(1.0)
-            )  # Tamaño compacto (1 pulgada de ancho
-            )
+            )  # Tamaño compacto (1 pulgada de ancho)
             
         COLOR_DORADO = RGBColor(197, 155, 39)
         COLOR_NEGRO_SUAVE = RGBColor(20, 20, 20)
