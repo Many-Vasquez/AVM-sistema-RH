@@ -2,6 +2,11 @@ import os
 from io import BytesIO
 import pandas as pd
 from docx import Document
+from docx.shared import Inches, Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 import streamlit as st
 
 # Configuración de la página
@@ -463,7 +468,7 @@ elif menu == "Generador de Cotizaciones":
             st.session_state.cantidad_guardias = cantidad_guardias
             st.session_state.precio_unitario = precio_unitario
 
-    # Botón de descarga fuera del formulario para evitar el error de contexto
+    # Botón de descarga fuera del formulario con diseño profesional en tabla y logotipo
     if st.session_state.get("cotizacion_generada", False):
         subtotal = (
             st.session_state.cantidad_guardias
@@ -473,70 +478,177 @@ elif menu == "Generador de Cotizaciones":
         total = subtotal + iva
 
         doc_cot = Document()
-        doc_cot.add_heading(
-            "AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SA DE CV",
-            level=1,
-        )
-        doc_cot.add_paragraph(
-            "SANTA BARBARA NUMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256, CIUDAD BENITO JUAREZ, NUEVO LEON\nPROPUESTA ECONOMICA DE SERVICIOS"
-        )
 
-        doc_cot.add_paragraph(
-            f"FECHA: {st.session_state.fecha_cot}\nEMPRESA: {st.session_state.empresa_cliente}\nCONTACTO: {st.session_state.contacto_cliente}"
-        )
+        # Configurar márgenes de página
+        sections = doc_cot.sections
+        for section in sections:
+            section.top_margin = Inches(1)
+            section.bottom_margin = Inches(1)
+            section.left_margin = Inches(1)
+            section.right_margin = Inches(1)
 
-        doc_cot.add_heading("ANÁLISIS DE SITUACIÓN", level=2)
-        doc_cot.add_paragraph(
+        # Inserción del logotipo institucional en el documento Word
+        if os.path.exists("logo.png"):
+            p_logo = doc_cot.add_paragraph()
+            p_logo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_logo.add_run().add_picture("logo.png", width=Inches(1.5))
+
+        # Encabezado corporativo institucional
+        p_emp = doc_cot.add_paragraph()
+        run_emp = p_emp.add_run(
+            "AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SA DE CV\n"
+        )
+        run_emp.bold = True
+        run_emp.font.size = Pt(12)
+        run_emp.font.color.rgb = RGBColor(27, 54, 93)
+
+        p_dir = doc_cot.add_paragraph()
+        run_dir = p_dir.add_run(
+            "SANTA BARBARA NUMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUAREZ, NUEVO LEON\n\nPROPUESTA ECONOMICA DE SERVICIOS"
+        )
+        run_dir.font.size = Pt(9)
+        run_dir.font.color.rgb = RGBColor(90, 90, 90)
+
+        # Datos generales
+        p_datos = doc_cot.add_paragraph()
+        p_datos.add_run(f"FECHA:\t\t{st.session_state.fecha_cot}\n")
+        p_datos.add_run(f"EMPRESA:\t{st.session_state.empresa_cliente}\n")
+        p_datos.add_run(f"CONTACTO:\t{st.session_state.contacto_cliente}\n")
+        for run in p_datos.runs:
+            run.font.size = Pt(10)
+            run.bold = True
+
+        # Análisis de situación
+        h2_1 = doc_cot.add_heading(level=2)
+        r_h2_1 = h2_1.add_run("ANÁLISIS DE SITUACIÓN:")
+        r_h2_1.font.size = Pt(11)
+        r_h2_1.font.color.rgb = RGBColor(27, 54, 93)
+
+        p_analisis = doc_cot.add_paragraph(
             "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal[cite: 10]."
         )
+        p_analisis.runs[0].font.size = Pt(10)
 
-        doc_cot.add_heading("TABLA DE COTIZACIÓN", level=2)
-        doc_cot.add_paragraph(
-            f"Cantidad: {st.session_state.cantidad_guardias} | Categoría: Guardias Intramuro o extramuro (Control de Accesos y Caseta) | Descripción: Control estricto de acceso peatonal y vehicular (empleados, contratistas, proveedores y transporte pesado). Turno de 12 horas | Precio Unitario: ${st.session_state.precio_unitario:,.2f} | Total Mensual: ${subtotal:,.2f}[cite: 10]"
-        )
-        doc_cot.add_paragraph(
-            f"Subtotal: ${subtotal:,.2f}\nIVA (16%): ${iva:,.2f}\nTOTAL: ${total:,.2f}[cite: 10]"
-        )
+        # Tabla de Cotización profesional
+        h2_2 = doc_cot.add_heading(level=2)
+        r_h2_2 = h2_2.add_run("PROPUESTA ECONÓMICA")
+        r_h2_2.font.size = Pt(11)
+        r_h2_2.font.color.rgb = RGBColor(27, 54, 93)
 
-        doc_cot.add_heading("TÉRMINOS Y CONDICIONES COMERCIALES", level=2)
-        doc_cot.add_heading("1. Responsabilidad Civil y Patronal", level=3)
-        doc_cot.add_paragraph(
-            "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes. El cliente queda exento de cualquier responsabilidad solidaria, ya que todo el personal operativo depende directamente de nuestra razón social[cite: 10]."
-        )
+        table = doc_cot.add_table(rows=2, cols=5)
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
-        doc_cot.add_heading(
-            "2. Garantía de Continuidad (Reemplazo Inmediato)", level=3
-        )
-        doc_cot.add_paragraph(
-            "Nos comprometemos a mantener la cobertura del servicio al 100%. En caso de ausencias por enfermedad, trámites administrativos o causas de fuerza mayor, el elemento será sustituido en un periodo no mayor a 90 minutos por personal de nuestro equipo de retén[cite: 10]."
-        )
+        # Encabezados de tabla
+        headers = [
+            "CANTIDAD",
+            "CATEGORÍA",
+            "DESCRIPCIÓN DEL SERVICIO",
+            "PRECIO UNITARIO",
+            "TOTAL MENSUAL",
+        ]
+        hdr_cells = table.rows[0].cells
+        for i, header_text in enumerate(headers):
+            hdr_cells[i].text = header_text
+            for paragraph in hdr_cells[i].paragraphs:
+                for run in paragraph.runs:
+                    run.font.bold = True
+                    run.font.size = Pt(9)
+                    run.font.color.rgb = RGBColor(255, 255, 255)
+            # Fondo oscuro para la cabecera de tabla
+            shading = OxmlElement("w:shd")
+            shading.set(qn("w:val"), "clear")
+            shading.set(qn("w:color"), "auto")
+            shading.set(qn("w:fill"), "1B365D")
+            hdr_cells[i]._tc.get_or_add_tcPr().append(shading)
 
-        doc_cot.add_heading("3. Confidencialidad Rigurosa", level=3)
-        doc_cot.add_paragraph(
-            "Todo el personal asignado cuenta con contratos de confidencialidad vigentes. Nuestra empresa se obliga a no divulgar información sensible, procesos internos o vulnerabilidades detectadas en las instalaciones del cliente[cite: 10]."
+        # Fila de datos
+        row_cells = table.rows[1].cells
+        row_cells[0].text = str(st.session_state.cantidad_guardias)
+        row_cells[1].text = "Guardias Intramuro o extramuro (Control de Accesos y Caseta)"
+        row_cells[2].text = (
+            "Control estricto de acceso peatonal y vehicular (empleados, contratistas, "
+            "proveedores y transporte pesado). Turno de 12 horas"
         )
+        row_cells[3].text = f"${st.session_state.precio_unitario:,.2f}"
+        row_cells[4].text = f"${subtotal:,.2f}"
 
-        doc_cot.add_heading("4. Vigencia de la Oferta", level=3)
-        doc_cot.add_paragraph(
-            "La presente propuesta económica tiene una validez de 15 días naturales a partir de su fecha de emisión, debido a posibles ajustes en tabuladores de costos operativos[cite: 10]."
-        )
+        for cell in row_cells:
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.font.size = Pt(9)
 
-        doc_cot.add_heading("5. Condiciones de Pago", level=3)
-        doc_cot.add_paragraph(
-            "Los servicios serán facturados de manera mensual y deberán ser liquidados dentro de los primeros 5 días naturales de cada mes para garantizar el flujo operativo y el cumplimiento puntual de sueldos del personal[cite: 10]."
-        )
+        # Totales debajo de la tabla
+        p_totales = doc_cot.add_paragraph()
+        p_totales.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p_totales.add_run(f"\nSubtotal: ${subtotal:,.2f}\n")
+        p_totales.add_run(f"IVA (16%): ${iva:,.2f}\n")
+        r_tot = p_totales.add_run(f"TOTAL: ${total:,.2f}")
+        r_tot.bold = True
+        r_tot.font.size = Pt(11)
+        r_tot.font.color.rgb = RGBColor(27, 54, 93)
 
-        doc_cot.add_paragraph(
-            '"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
+        for run in p_totales.runs:
+            if run != r_tot:
+                run.font.size = Pt(10)
+
+        # Términos y Condiciones
+        h2_3 = doc_cot.add_heading(level=2)
+        r_h2_3 = h2_3.add_run("TÉRMINOS Y CONDICIONES COMERCIALES:")
+        r_h2_3.font.size = Pt(11)
+        r_h2_3.font.color.rgb = RGBColor(27, 54, 93)
+
+        terminos = [
+            (
+                "1. Responsabilidad Civil y Patronal:",
+                "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes. El cliente queda exento de cualquier responsabilidad solidaria, ya que todo el personal operativo depende directamente de nuestra razón social[cite: 10].",
+            ),
+            (
+                "2. Garantía de Continuidad (Reemplazo Inmediato):",
+                "Nos comprometemos a mantener la cobertura del servicio al 100%. En caso de ausencias por enfermedad, trámites administrativos o causas de fuerza mayor, el elemento será sustituido en un periodo no mayor a 90 minutos por personal de nuestro equipo de retén[cite: 10].",
+            ),
+            (
+                "3. Confidencialidad Rigurosa:",
+                "Todo el personal asignado cuenta con contratos de confidencialidad vigentes. Nuestra empresa se obliga a no divulgar información sensible, procesos internos o vulnerabilidades detectadas en las instalaciones del cliente[cite: 10].",
+            ),
+            (
+                "4. Vigencia de la Oferta:",
+                "La presente propuesta económica tiene una validez de 15 días naturales a partir de su fecha de emisión, debido a posibles ajustes en tabuladores de costos operativos[cite: 10].",
+            ),
+            (
+                "5. Condiciones de Pago:",
+                "Los servicios serán facturados de manera mensual y deberán ser liquidados dentro de los primeros 5 días naturales de cada mes para garantizar el flujo operativo y el cumplimiento puntual de sueldos del personal[cite: 10].",
+            ),
+        ]
+
+        for titulo, desc in terminos:
+            p_term = doc_cot.add_paragraph()
+            r_t = p_term.add_run(titulo + " ")
+            r_t.bold = True
+            r_t.font.size = Pt(9.5)
+            r_t.font.color.rgb = RGBColor(27, 54, 93)
+
+            r_d = p_term.add_run(desc)
+            r_d.font.size = Pt(9.5)
+
+        # Eslogan final
+        p_pie = doc_cot.add_paragraph()
+        p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_pie = p_pie.add_run(
+            '\n"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
         )
+        r_pie.italic = True
+        r_pie.font.size = Pt(9)
+        r_pie.font.color.rgb = RGBColor(90, 90, 90)
 
         buffer_cot = BytesIO()
         doc_cot.save(buffer_cot)
         buffer_cot.seek(0)
 
-        st.success("¡Cotización generada con éxito!")
+        st.success(
+            "¡Cotización generada con éxito con formato profesional y logotipo!"
+        )
         st.download_button(
-            label="📥 Descargar Propuesta Económica en Word",
+            label="📥 Descargar Propuesta Económica en Word (Formato Ejecutivo)",
             data=buffer_cot,
             file_name=f"Cotizacion_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
