@@ -75,14 +75,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- BASE DE DATOS PERSISTENTE (CSV) ---
+# --- BASE DE DATOS PERSISTENTE (CSV) SEGURA ---
 DB_FILE = "personal_avm.csv"
 DB_ASISTENCIA = "asistencias_avm.csv"
 
 
 def cargar_datos_empleados():
-    if os.path.exists(DB_FILE):
-        return pd.read_csv(DB_FILE).to_dict(orient="records")
+    if os.path.exists(DB_FILE) and os.path.getsize(DB_FILE) > 0:
+        try:
+            return pd.read_csv(DB_FILE).to_dict(orient="records")
+        except Exception:
+            return []
     return []
 
 
@@ -92,8 +95,11 @@ def guardar_datos_empleados(lista_empleados):
 
 
 def cargar_datos_asistencias():
-    if os.path.exists(DB_ASISTENCIA):
-        return pd.read_csv(DB_ASISTENCIA).to_dict(orient="records")
+    if os.path.exists(DB_ASISTENCIA) and os.path.getsize(DB_ASISTENCIA) > 0:
+        try:
+            return pd.read_csv(DB_ASISTENCIA).to_dict(orient="records")
+        except Exception:
+            return []
     return []
 
 
@@ -459,7 +465,6 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
 elif menu == "👥 Registro de Personal":
     st.header("📝 Registro y Gestión de Personal / Guardias")
 
-    # Sección de Registro Nuevo
     with st.form("form_empleado"):
         col1, col2 = st.columns(2)
 
@@ -515,7 +520,7 @@ elif menu == "👥 Registro de Personal":
 
     st.session_state.empleados = cargar_datos_empleados()
     if not st.session_state.empleados:
-        st.info("ℹ️ No hay personal registrado actualmente.")
+        st.info("ℹ️ No hay personal registrado actualmente en la base de datos.")
     else:
         nombres_registrados = [e["Nombre"] for e in st.session_state.empleados]
         emp_a_editar = st.selectbox(
