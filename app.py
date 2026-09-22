@@ -160,7 +160,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
             precio_unitario = st.number_input(
                 "Precio Unitario Mensual por Guardia ($)",
                 min_value=0.0,
-                value=100000000,
+                value=0.0,
                 step=100.0,
             )
 
@@ -326,7 +326,7 @@ if st.session_state.vista_actual == "Generador de Cotizaciones":
         row_cells = table.rows[1].cells
         row_cells[0].text = str(st.session_state.cantidad_guardias)
         row_cells[1].text = (
-            "Guardias Intramuro/Extramuros- Control de Accesos"
+            "Guardias Intramuros/Extramuros- Control de Accesos"
         )
         row_cells[2].text = (
             "Control estricto de acceso peatonal y vehicular "
