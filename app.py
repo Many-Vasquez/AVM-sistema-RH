@@ -87,8 +87,8 @@ def inicializar_usuarios():
         df_admin = pd.DataFrame(
             [
                 {
-                    "Usuario": "Abner",
-                    "Password": "AVM2026",
+                    "Usuario": "JOSE VASQUEZ",
+                    "Password": "UCALLI123",
                     "Rol": "Administrador",
                 }
             ]
