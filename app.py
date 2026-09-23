@@ -12,12 +12,12 @@ from docx.shared import Inches, Pt, RGBColor
 
 # Configuración de la página
 st.set_page_config(
-    page_title="AVM - Sistema de Recursos Humanos y Comercial",
+    page_title="AVM - Sistema de Seguridad Privada",
     page_icon="🛡️",
     layout="wide",
 )
 
-# Estilos corporativos en Negro y Dorado + visibilidad de botones
+# Estilos corporativos en Negro y Dorado
 st.markdown(
     """
     <style>
@@ -45,7 +45,6 @@ st.markdown(
             border-bottom: 2px solid #d4af37;
             padding-bottom: 10px;
         }
-        /* Botones generales estilizados y visibles */
         .stButton>button {
             background-color: #d4af37;
             color: #0e0e0e;
@@ -75,9 +74,58 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- BASE DE DATOS PERSISTENTE (CSV) SEGURA ---
+# --- BASES DE DATOS PERSISTENTES (CSV) ---
 DB_FILE = "personal_avm.csv"
 DB_ASISTENCIA = "asistencias_avm.csv"
+DB_USUARIOS = "usuarios_avm.csv"
+DB_AUDITORIA = "auditoria_avm.csv"
+
+
+# Inicializar Administrador por defecto si no existe la BD de usuarios
+def inicializar_usuarios():
+    if not os.path.exists(DB_USUARIOS) or os.path.getsize(DB_USUARIOS) == 0:
+        df_admin = pd.DataFrame(
+            [
+                {
+                    "Usuario": "Abner",
+                    "Password": "AVM2026",
+                    "Rol": "Administrador",
+                }
+            ]
+        )
+        df_admin.to_csv(DB_USUARIOS, index=False)
+
+
+inicializar_usuarios()
+
+
+def registrar_auditoria(usuario, accion, detalle):
+    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    nuevo_log = {
+        "Fecha_Hora": ahora,
+        "Usuario": usuario,
+        "Acción": accion,
+        "Detalle": detalle,
+    }
+    if os.path.exists(DB_AUDITORIA) and os.path.getsize(DB_AUDITORIA) > 0:
+        df_log = pd.read_csv(DB_AUDITORIA)
+        df_log = pd.concat([df_log, pd.DataFrame([nuevo_log])], ignore_index=True)
+    else:
+        df_log = pd.DataFrame([nuevo_log])
+    df_log.to_csv(DB_AUDITORIA, index=False)
+
+
+def cargar_usuarios():
+    if os.path.exists(DB_USUARIOS) and os.path.getsize(DB_USUARIOS) > 0:
+        try:
+            return pd.read_csv(DB_USUARIOS).to_dict(orient="records")
+        except Exception:
+            return []
+    return []
+
+
+def guardar_usuarios(lista):
+    pd.DataFrame(lista).to_csv(DB_USUARIOS, index=False)
 
 
 def cargar_datos_empleados():
@@ -89,9 +137,8 @@ def cargar_datos_empleados():
     return []
 
 
-def guardar_datos_empleados(lista_empleados):
-    df = pd.DataFrame(lista_empleados)
-    df.to_csv(DB_FILE, index=False)
+def guardar_datos_empleados(lista):
+    pd.DataFrame(lista).to_csv(DB_FILE, index=False)
 
 
 def cargar_datos_asistencias():
@@ -103,46 +150,101 @@ def cargar_datos_asistencias():
     return []
 
 
-def guardar_datos_asistencias(lista_asistencias):
-    df = pd.DataFrame(lista_asistencias)
-    df.to_csv(DB_ASISTENCIA, index=False)
+def guardar_datos_asistencias(lista):
+    pd.DataFrame(lista).to_csv(DB_ASISTENCIA, index=False)
 
 
-# Inicialización de estados sincronizados con archivos
-if "empleados" not in st.session_state:
-    st.session_state.empleados = cargar_datos_empleados()
+# --- SISTEMA DE AUTENTICACIÓN (LOGIN) ---
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+    st.session_state.usuario_actual = ""
+    st.session_state.rol_actual = ""
 
-if "asistencias" not in st.session_state:
-    st.session_state.asistencias = cargar_datos_asistencias()
-
-if "cotizacion_generada" not in st.session_state:
-    st.session_state.cotizacion_generada = False
-
-
-# --- MENÚ DE NAVEGACIÓN EN LA BARRA LATERAL ---
 logo_path = (
     "Imagen1 (1).png" if os.path.exists("Imagen1 (1).png") else "logo.png"
 )
+
+if not st.session_state.autenticado:
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if os.path.exists(logo_path):
+            st.image(logo_path, use_container_width=True)
+        st.markdown(
+            "<h1 style='text-align: center; color: #d4af37;'>AVM Grupo Integral de Seguridad Privada</h1>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "<h3 style='text-align: center; color: #ffffff;'>Acceso al Sistema Operativo</h3>",
+            unsafe_allow_html=True,
+        )
+
+        with st.form("form_login"):
+            usuario_input = st.text_input("Usuario")
+            password_input = st.text_input("Contraseña", type="password")
+            btn_login = st.form_submit_button("🔑 Iniciar Sesión")
+
+            if btn_login:
+                usuarios_registrados = cargar_usuarios()
+                user_match = next(
+                    (
+                        u
+                        for u in usuarios_registrados
+                        if u["Usuario"] == usuario_input
+                        and str(u["Password"]) == password_input
+                    ),
+                    None,
+                )
+
+                if user_match:
+                    st.session_state.autenticado = True
+                    st.session_state.usuario_actual = user_match["Usuario"]
+                    st.session_state.rol_actual = user_match["Rol"]
+                    registrar_auditoria(
+                        user_match["Usuario"],
+                        "LOGIN",
+                        "Inicio de sesión exitoso",
+                    )
+                    st.success("¡Acceso concedido! Cargando sistema...")
+                    st.rerun()
+                else:
+                    st.error("Usuario o contraseña incorrectos.")
+    st.stop()
+
+
+# --- APLICACIÓN PRINCIPAL (UNA VEZ AUTENTICADO) ---
 if os.path.exists(logo_path):
     st.sidebar.image(logo_path, width=150)
 
+st.sidebar.markdown(
+    f"👤 **Usuario:** {st.session_state.usuario_actual} (*{st.session_state.rol_actual}*)"
+)
+if st.sidebar.button("🚪 Cerrar Sesión"):
+    registrar_auditoria(
+        st.session_state.usuario_actual, "LOGOUT", "Cierre de sesión"
+    )
+    st.session_state.autenticado = False
+    st.rerun()
+
+st.sidebar.markdown("---")
 st.sidebar.markdown("### 🧭 Menú de Navegación", unsafe_allow_html=True)
 
-menu = st.sidebar.radio(
-    "Seleccione el Módulo:",
-    [
-        "🏠 Inicio",
-        "📊 Módulo Comercial (Cotizador)",
-        "👥 Registro de Personal",
-        "📥 Reporte de Personal (Excel)",
-        "👆 Checador Biométrico de Huella",
-        "📈 Reportes Métricos de Asistencia",
-        "📄 Generación de Contratos",
-    ],
-)
+opciones_menu = [
+    "🏠 Inicio",
+    "📊 Módulo Comercial (Cotizador)",
+    "👥 Registro de Personal",
+    "📥 Reporte de Personal (Excel)",
+    "👆 Checador Biométrico de Huella",
+    "📈 Reportes Métricos de Asistencia",
+    "📄 Generación de Contratos",
+]
+
+# Si es Administrador, agregamos el panel de control maestro
+if st.session_state.rol_actual == "Administrador":
+    opciones_menu.append("🛡️ Panel de Administrador (Usuarios y Auditoría)")
+
+menu = st.sidebar.radio("Seleccione el Módulo:", opciones_menu)
 
 
-# Función auxiliar para quitar bordes a tablas en Word
 def remove_table_borders(table):
     tblPr = table._tbl.tblPr
     tblBorders = OxmlElement("w:tblBorders")
@@ -160,7 +262,7 @@ def remove_table_borders(table):
     tblPr.append(tblBorders)
 
 
-# --- 🏠 PÁGINA DE INICIO ---
+# --- 🏠 INICIO ---
 if menu == "🏠 Inicio":
     col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
     with col_c2:
@@ -171,15 +273,13 @@ if menu == "🏠 Inicio":
             unsafe_allow_html=True,
         )
         st.markdown(
-            "<p style='text-align: center; color: #aaaaaa; font-size: 1.1rem;'>Sistema de Gestión Operativa, Recursos Humanos y Propuestas Comerciales</p>",
+            "<p style='text-align: center; color: #aaaaaa; font-size: 1.1rem;'>Sistema Operativo Centralizado</p>",
             unsafe_allow_html=True,
         )
 
-# --- 📊 MÓDULO COMERCIAL (COTIZADOR) ---
+# --- 📊 COTIZADOR ---
 elif menu == "📊 Módulo Comercial (Cotizador)":
     st.header("📊 Módulo Comercial - Generador de Cotizaciones")
-    st.markdown("Complete los datos de la propuesta económica:")
-
     with st.form("form_cotizacion"):
         col1, col2 = st.columns(2)
         with col1:
@@ -205,9 +305,7 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
                 step=100.0,
                 format="%.2f",
             )
-
         submitted_cot = st.form_submit_button("⚙️ Generar Propuesta Económica")
-
         if submitted_cot:
             if empresa_cliente and cantidad_guardias > 0 and precio_unitario > 0:
                 st.session_state.cotizacion_generada = True
@@ -216,10 +314,15 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
                 st.session_state.fecha_cot = fecha_cot
                 st.session_state.cantidad_guardias = cantidad_guardias
                 st.session_state.precio_unitario = precio_unitario
+                registrar_auditoria(
+                    st.session_state.usuario_actual,
+                    "COTIZACION",
+                    f"Generó cotización para {empresa_cliente}",
+                )
                 st.success("¡Datos de cotización cargados con éxito!")
             else:
                 st.error(
-                    "Por favor complete el nombre del cliente, cantidad de guardias y precio unitario."
+                    "Por favor complete el nombre del cliente, cantidad y precio."
                 )
 
     if st.session_state.get("cotizacion_generada", False):
@@ -229,9 +332,7 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         )
         iva = subtotal * 0.16
         total = subtotal + iva
-
         doc_cot = Document()
-
         for section in doc_cot.sections:
             section.top_margin = Inches(0.8)
             section.bottom_margin = Inches(0.8)
@@ -245,7 +346,6 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         header_table = doc_cot.add_table(rows=1, cols=2)
         header_table.alignment = WD_TABLE_ALIGNMENT.CENTER
         remove_table_borders(header_table)
-
         cell_logo = header_table.cell(0, 0)
         cell_logo.width = Inches(1.2)
         p_logo = cell_logo.paragraphs[0]
@@ -255,14 +355,11 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
 
         cell_text = header_table.cell(0, 1)
         cell_text.width = Inches(5.3)
-
         p_emp = cell_text.paragraphs[0]
-        p_emp.paragraph_format.space_after = Pt(1)
         run_emp_1 = p_emp.add_run("AVM")
         run_emp_1.bold = True
         run_emp_1.font.size = Pt(13)
         run_emp_1.font.color.rgb = COLOR_NEGRO_SUAVE
-
         run_emp_2 = p_emp.add_run(
             " GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V."
         )
@@ -271,7 +368,6 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         run_emp_2.font.color.rgb = COLOR_DORADO
 
         p_dir = cell_text.add_paragraph()
-        p_dir.paragraph_format.space_after = Pt(0)
         run_dir = p_dir.add_run(
             "SANTA BÁRBARA NÚMERO 141, COLONIA VALLE DE SANTA ISABEL, C.P. 67256,\nCIUDAD BENITO JUÁREZ, NUEVO LEÓN"
         )
@@ -279,8 +375,6 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         run_dir.font.color.rgb = COLOR_GRIS_TEXTO
 
         p_line = doc_cot.add_paragraph()
-        p_line.paragraph_format.space_before = Pt(4)
-        p_line.paragraph_format.space_after = Pt(6)
         r_line = p_line.add_run(
             "_________________________________________________________________________________"
         )
@@ -288,14 +382,12 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         r_line.font.color.rgb = COLOR_DORADO
 
         p_prop = doc_cot.add_paragraph()
-        p_prop.paragraph_format.space_after = Pt(4)
         run_prop = p_prop.add_run("PROPUESTA ECONÓMICA DE SERVICIOS")
         run_prop.bold = True
         run_prop.font.size = Pt(11)
         run_prop.font.color.rgb = COLOR_DORADO
 
         p_datos = doc_cot.add_paragraph()
-        p_datos.paragraph_format.space_after = Pt(6)
         if st.session_state.fecha_cot:
             p_datos.add_run(
                 f"FECHA DE EMISIÓN:  {st.session_state.fecha_cot}\n"
@@ -312,29 +404,22 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
             run.font.color.rgb = COLOR_NEGRO_SUAVE
 
         h2_1 = doc_cot.add_heading(level=2)
-        h2_1.paragraph_format.space_before = Pt(2)
-        h2_1.paragraph_format.space_after = Pt(2)
         r_h2_1 = h2_1.add_run("ANÁLISIS DE SITUACIÓN:")
         r_h2_1.font.size = Pt(10)
         r_h2_1.font.color.rgb = COLOR_DORADO
-
         p_analisis = doc_cot.add_paragraph(
-            "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la capacidad de respuesta inmediata bajo los más altos estándares de cumplimiento legal."
+            "Tras evaluar las necesidades de seguridad de su instalación, nuestra firma propone un esquema de Seguridad Proactiva. A diferencia de la vigilancia convencional, nuestro servicio se basa en la disuasión avanzada y la respuesta inmediata bajo los más altos estándares legales."
         )
-        p_analisis.paragraph_format.space_after = Pt(6)
         p_analisis.runs[0].font.size = Pt(9)
         p_analisis.runs[0].font.color.rgb = COLOR_NEGRO_SUAVE
 
         h2_2 = doc_cot.add_heading(level=2)
-        h2_2.paragraph_format.space_before = Pt(2)
-        h2_2.paragraph_format.space_after = Pt(2)
         r_h2_2 = h2_2.add_run("DETALLE DE COTIZACIÓN:")
         r_h2_2.font.size = Pt(10)
         r_h2_2.font.color.rgb = COLOR_DORADO
 
         table = doc_cot.add_table(rows=2, cols=5)
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
         headers = [
             "CANT.",
             "CATEGORÍA",
@@ -363,12 +448,10 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
             "Guardias Intramuro/Extramuros- Control de Accesos"
         )
         row_cells[2].text = (
-            "Control estricto de acceso peatonal y vehicular "
-            "(empleados, contratistas, proveedores y transporte pesado). Turno de 12 horas."
+            "Control estricto de acceso peatonal y vehicular. Turno de 12 horas."
         )
         row_cells[3].text = f"${st.session_state.precio_unitario:,.2f}"
         row_cells[4].text = f"${subtotal:,.2f}"
-
         for i, cell in enumerate(row_cells):
             for paragraph in cell.paragraphs:
                 if i in [0, 3, 4]:
@@ -378,8 +461,6 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
                     run.font.color.rgb = COLOR_NEGRO_SUAVE
 
         p_totales = doc_cot.add_paragraph()
-        p_totales.paragraph_format.space_before = Pt(4)
-        p_totales.paragraph_format.space_after = Pt(6)
         p_totales.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         p_totales.add_run(f"Subtotal: ${subtotal:,.2f}\n")
         p_totales.add_run(f"IVA (16%): ${iva:,.2f}\n")
@@ -387,63 +468,55 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         r_tot.bold = True
         r_tot.font.size = Pt(10)
         r_tot.font.color.rgb = COLOR_DORADO
-
         for run in p_totales.runs:
             if run != r_tot:
                 run.font.size = Pt(8.5)
                 run.font.color.rgb = COLOR_NEGRO_SUAVE
 
         h2_3 = doc_cot.add_heading(level=2)
-        h2_3.paragraph_format.space_before = Pt(2)
-        h2_3.paragraph_format.space_after = Pt(2)
         r_h2_3 = h2_3.add_run("TÉRMINOS Y CONDICIONES COMERCIALES:")
         r_h2_3.font.size = Pt(10)
         r_h2_3.font.color.rgb = COLOR_DORADO
-
         terminos = [
             (
                 "1. Responsabilidad Civil y Patronal:",
-                "Nuestra firma asume la totalidad de las obligaciones derivadas de las leyes laborales, de seguridad social (IMSS, INFONAVIT) y fiscales vigentes.",
+                "Obligaciones laborales y de seguridad social (IMSS, INFONAVIT) cubiertas.",
             ),
             (
                 "2. Garantía de Continuidad:",
-                "Nos comprometemos a mantener la cobertura del servicio al 100%. Sustitución en menos de 90 minutos por personal de retén.",
+                "Cobertura al 100% con sustitución en menos de 90 minutos.",
             ),
             (
                 "3. Confidencialidad Rigurosa:",
-                "Todo el personal asignado cuenta con estrictos contratos de confidencialidad para proteger las operaciones del cliente.",
+                "Contratos estrictos de secrecía para proteger al cliente.",
             ),
             (
                 "4. Vigencia de la Propuesta:",
-                "La presente cotización tiene una validez de 15 días naturales a partir de su emisión.",
+                "Validez de 15 días naturales a partir de su emisión.",
             ),
             (
                 "5. Condiciones de Pago:",
-                "Facturación mensual liquidable dentro de los primeros 5 días naturales de cada mes.",
+                "Facturación mensual dentro de los primeros 5 días naturales.",
             ),
             (
                 "6. Dias Festivos:",
                 "Se cobran el doble del costo por dia.",
             ),
         ]
-
         for titulo, desc in terminos:
             p_term = doc_cot.add_paragraph()
-            p_term.paragraph_format.space_after = Pt(1)
             r_t = p_term.add_run(titulo + " ")
             r_t.bold = True
             r_t.font.size = Pt(8)
             r_t.font.color.rgb = COLOR_DORADO
-
             r_d = p_term.add_run(desc)
             r_d.font.size = Pt(8)
             r_d.font.color.rgb = COLOR_NEGRO_SUAVE
 
         p_pie = doc_cot.add_paragraph()
-        p_pie.paragraph_format.space_before = Pt(6)
         p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r_pie = p_pie.add_run(
-            '"Nuestra estructura operativa garantiza que el error humano se reduzca al mínimo mediante la supervisión cruzada y el respaldo tecnológico en tiempo real."'
+            '"Nuestra estructura operativa garantiza la reducción del error humano mediante supervisión cruzada."'
         )
         r_pie.italic = True
         r_pie.font.size = Pt(8)
@@ -452,22 +525,19 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
         buffer_cot = BytesIO()
         doc_cot.save(buffer_cot)
         buffer_cot.seek(0)
-
         st.success("¡Propuesta económica generada con éxito!")
         st.download_button(
-            label="📥 Descargar Propuesta Económica en Word",
+            label="📥 Descargar Propuesta en Word",
             data=buffer_cot,
-            file_name=f"Cotizacion_AVM_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
+            file_name=f"Cotizacion_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
 # --- 👥 REGISTRO DE PERSONAL ---
 elif menu == "👥 Registro de Personal":
     st.header("📝 Registro y Gestión de Personal / Guardias")
-
     with st.form("form_empleado"):
         col1, col2 = st.columns(2)
-
         with col1:
             nombre = st.text_input("Nombre Completo del Trabajador")
             nacionalidad = st.text_input("Nacionalidad", value="Mexicana")
@@ -478,7 +548,6 @@ elif menu == "👥 Registro de Personal":
             estado_civil = st.selectbox(
                 "Estado Civil", ["Soltero/a", "Casado/a", "Viudo/a"]
             )
-
         with col2:
             curp = st.text_input("CURP")
             rfc = st.text_input("RFC")
@@ -489,11 +558,10 @@ elif menu == "👥 Registro de Personal":
                 "Salario Semanal", value="$2,103.85"
             )
 
-        submitted = st.form_submit_button("💾 Guardar Elemento en Base de Datos")
-
+        submitted = st.form_submit_button("💾 Guardar Elemento")
         if submitted:
             if nombre and curp and nss:
-                st.session_state.empleados = cargar_datos_empleados()
+                empleados = cargar_datos_empleados()
                 nuevo_emp = {
                     "Nombre": nombre,
                     "Nacionalidad": nacionalidad,
@@ -507,31 +575,26 @@ elif menu == "👥 Registro de Personal":
                     "Puesto": puesto,
                     "Salario Semanal": salario_semanal,
                 }
-                st.session_state.empleados.append(nuevo_emp)
-                guardar_datos_empleados(st.session_state.empleados)
-                st.success(
-                    f"¡Guardia {nombre} registrado y guardado en la base de datos central!"
+                empleados.append(nuevo_emp)
+                guardar_datos_empleados(empleados)
+                registrar_auditoria(
+                    st.session_state.usuario_actual,
+                    "ALTA PERSONAL",
+                    f"Registró a {nombre} (NSS: {nss})",
                 )
+                st.success(f"¡Guardia {nombre} registrado correctamente!")
             else:
-                st.error("Por favor complete al menos Nombre, CURP y NSS.")
+                st.error("Por favor complete Nombre, CURP y NSS.")
 
     st.markdown("---")
-    st.subheader("⚙️ Modificar o Eliminar Personal Existente")
-
-    st.session_state.empleados = cargar_datos_empleados()
-    if not st.session_state.empleados:
-        st.info("ℹ️ No hay personal registrado actualmente en la base de datos.")
+    st.subheader("⚙️ Modificar o Eliminar Personal")
+    empleados = cargar_datos_empleados()
+    if not empleados:
+        st.info("No hay personal registrado.")
     else:
-        nombres_registrados = [e["Nombre"] for e in st.session_state.empleados]
-        emp_a_editar = st.selectbox(
-            "Seleccione al Elemento a Gestionar", nombres_registrados
-        )
-
-        datos_actuales = next(
-            e
-            for e in st.session_state.empleados
-            if e["Nombre"] == emp_a_editar
-        )
+        nombres_registrados = [e["Nombre"] for e in empleados]
+        emp_a_editar = st.selectbox("Seleccione Elemento", nombres_registrados)
+        datos_actuales = next(e for e in empleados if e["Nombre"] == emp_a_editar)
 
         col_e1, col_e2 = st.columns(2)
         with col_e1:
@@ -546,8 +609,7 @@ elif menu == "👥 Registro de Personal":
             )
         with col_e2:
             nuevo_salario = st.text_input(
-                "Modificar Salario Semanal",
-                value=datos_actuales["Salario Semanal"],
+                "Modificar Salario", value=datos_actuales["Salario Semanal"]
             )
             nuevo_domicilio = st.text_area(
                 "Modificar Domicilio", value=datos_actuales["Domicilio"]
@@ -555,270 +617,216 @@ elif menu == "👥 Registro de Personal":
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("🔄 Actualizar Datos del Elemento"):
-                for e in st.session_state.empleados:
+            if st.button("🔄 Actualizar Datos"):
+                for e in empleados:
                     if e["Nombre"] == emp_a_editar:
                         e["Nombre"] = nuevo_nombre
                         e["Puesto"] = nuevo_puesto
                         e["NSS"] = nuevo_nss
                         e["Salario Semanal"] = nuevo_salario
                         e["Domicilio"] = nuevo_domicilio
-                guardar_datos_empleados(st.session_state.empleados)
-                st.success(
-                    f"¡Datos de {nuevo_nombre} actualizados correctamente!"
+                guardar_datos_empleados(empleados)
+                registrar_auditoria(
+                    st.session_state.usuario_actual,
+                    "MODIFICA PERSONAL",
+                    f"Actualizó datos de {nuevo_nombre}",
                 )
+                st.success("¡Actualizado con éxito!")
                 st.rerun()
-
         with col_btn2:
-            if st.button(
-                "🗑️ Eliminar Elemento de la Base de Datos", type="primary"
-            ):
-                st.session_state.empleados = [
-                    e
-                    for e in st.session_state.empleados
-                    if e["Nombre"] != emp_a_editar
-                ]
-                guardar_datos_empleados(st.session_state.empleados)
-                st.warning(
-                    f"Elemento {emp_a_editar} eliminado correctamente."
+            if st.button("🗑️ Eliminar Elemento", type="primary"):
+                empleados = [e for e in empleados if e["Nombre"] != emp_a_editar]
+                guardar_datos_empleados(empleados)
+                registrar_auditoria(
+                    st.session_state.usuario_actual,
+                    "ELIMINA PERSONAL",
+                    f"Eliminó a {emp_a_editar}",
                 )
+                st.warning("Elemento eliminado.")
                 st.rerun()
 
-        st.markdown("### 📋 Plantilla Actual de Personal Sincronizado")
-        df_personal = pd.DataFrame(st.session_state.empleados)
-        st.dataframe(df_personal, use_container_width=True)
+        st.subheader("📋 Plantilla Vigente")
+        st.dataframe(pd.DataFrame(empleados), use_container_width=True)
 
-# --- 📥 REPORTE DE PERSONAL (EXCEL) ---
+# --- 📥 REPORTE DE PERSONAL (CSV/EXCEL) ---
 elif menu == "📥 Reporte de Personal (Excel)":
-    st.header("📥 Módulo de Reportes de Personal")
-    st.markdown(
-        "Genere y descargue el padrón completo del personal activo para auditoría o administración."
-    )
-
-    st.session_state.empleados = cargar_datos_empleados()
-    if not st.session_state.empleados:
-        st.info("ℹ️ No hay registros de personal en este momento.")
+    st.header("📥 Reporte General de Personal")
+    empleados = cargar_datos_empleados()
+    if not empleados:
+        st.info("No hay registros.")
     else:
-        df_excel = pd.DataFrame(st.session_state.empleados)
+        df_excel = pd.DataFrame(empleados)
         st.dataframe(df_excel, use_container_width=True)
-
-        csv_personal = df_excel.to_csv(index=False).encode("utf-8")
-
         st.download_button(
-            label="📊 Descargar Listado de Personal (Compatible con Excel)",
-            data=csv_personal,
-            file_name=f"Padron_Personal_AVM_{datetime.now().strftime('%Y-%m-%d')}.csv",
+            "📊 Descargar Padrón (CSV)",
+            df_excel.to_csv(index=False).encode("utf-8"),
+            file_name="Personal_AVM.csv",
             mime="text/csv",
         )
 
-# --- 👆 CHECADOR BIOMÉTRICO DE HUELLA ---
+# --- 👆 CHECADOR BIOMÉTRICO ---
 elif menu == "👆 Checador Biométrico de Huella":
-    st.header("👆 Terminal Biométrica - Control de Asistencia y Turnos")
-    st.markdown(
-        "Módulo independiente para registro de huella y cambios de turno en planta."
-    )
-
-    st.session_state.empleados = cargar_datos_empleados()
-    if not st.session_state.empleados:
-        st.warning(
-            "⚠️ No hay elementos registrados. Registre personal primero en el módulo de 'Registro de Personal'."
-        )
+    st.header("👆 Terminal Biométrica de Asistencia")
+    empleados = cargar_datos_empleados()
+    if not empleados:
+        st.warning("⚠️ No hay personal registrado.")
     else:
         col_b1, col_b2 = st.columns(2)
-
         with col_b1:
-            nombres_empleados = [
-                e["Nombre"] for e in st.session_state.empleados
-            ]
-            emp_checador = st.selectbox(
-                "Seleccionar Elemento / Guardia", nombres_empleados
+            nombres = [e["Nombre"] for e in empleados]
+            emp_sel = st.selectbox("Elemento", nombres)
+            datos_emp = next(e for e in empleados if e["Nombre"] == emp_sel)
+            tipo_mov = st.radio(
+                "Movimiento", ["Entrada de Turno", "Salida de Turno"]
             )
-            datos_emp = next(
-                e
-                for e in st.session_state.empleados
-                if e["Nombre"] == emp_checador
-            )
-
-            st.info(
-                f"**NSS:** {datos_emp['NSS']} \n\n **Puesto:** {datos_emp['Puesto']}"
-            )
-
-            tipo_movimiento = st.radio(
-                "Tipo de Registro", ["Entrada de Turno", "Salida de Turno"]
-            )
-
         with col_b2:
-            st.markdown("### 🖐️ Validación Biométrica")
-            st.markdown(
-                "Coloque el dedo en el lector USB o presione para simular fichaje:"
-            )
-
-            if st.button(
-                "🔴 ESCANEAR HUELLA DIGITAL (Simulador)",
-                use_container_width=True,
-            ):
+            if st.button("🔴 ESCANEAR HUELLA DIGITAL", use_container_width=True):
                 ahora = datetime.now()
-                fecha_str = ahora.strftime("%Y-%m-%d")
-                hora_str = ahora.strftime("%H:%M:%S")
-
-                hora_limite = time(8, 0, 0)
-                hora_actual = ahora.time()
-
-                if tipo_movimiento == "Entrada de Turno":
-                    if hora_actual <= hora_limite:
-                        puntualidad = "A TIEMPO"
-                        cumple_puntualidad = "SÍ"
-                    else:
-                        puntualidad = "RETARDO"
-                        cumple_puntualidad = "NO"
-                else:
-                    puntualidad = "N/A (Salida)"
-                    cumple_puntualidad = "N/A"
-
-                if (
-                    cumple_puntualidad == "SÍ"
-                    or tipo_movimiento == "Salida de Turno"
-                ):
-                    bono_otorgado = "SÍ ($900.00)"
-                else:
-                    bono_otorgado = "NO (Castigado por retardo)"
-
-                nuevo_registro = {
-                    "Fecha": fecha_str,
+                reg = {
+                    "Fecha": ahora.strftime("%Y-%m-%d"),
                     "Nombre": datos_emp["Nombre"],
                     "NSS": datos_emp["NSS"],
-                    "Movimiento": tipo_movimiento,
-                    "Hora": hora_str,
-                    "Estado": puntualidad,
-                    "Bono Asistencia/Puntualidad": bono_otorgado,
+                    "Movimiento": tipo_mov,
+                    "Hora": ahora.strftime("%H:%M:%S"),
+                    "Bono": "SÍ" if tipo_mov == "Salida de Turno" else "VALIDADO",
                 }
-
-                st.session_state.asistencias.append(nuevo_registro)
-                guardar_datos_asistencias(st.session_state.asistencias)
-                st.success(
-                    f"✅ ¡{tipo_movimiento.upper()} registrada para {datos_emp['Nombre']} a las {hora_str}!"
+                asistencias = cargar_datos_asistencias()
+                asistencias.append(reg)
+                guardar_datos_asistencias(asistencias)
+                registrar_auditoria(
+                    st.session_state.usuario_actual,
+                    "ASISTENCIA",
+                    f"Fichaje {tipo_mov} para {datos_emp['Nombre']}",
                 )
+                st.success(f"¡{tipo_mov} registrada!")
 
-    st.session_state.asistencias = cargar_datos_asistencias()
-    if len(st.session_state.asistencias) > 0:
-        st.subheader("⚡ Últimos Registros Biométricos (Sincronizados)")
-        df_asist = pd.DataFrame(st.session_state.asistencias)
-        st.dataframe(df_asist, use_container_width=True)
+    asistencias = cargar_datos_asistencias()
+    if asistencias:
+        st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
 
-# --- 📈 REPORTES MÉTRICOS DE ASISTENCIA ---
+# --- 📈 REPORTES DE ASISTENCIA ---
 elif menu == "📈 Reportes Métricos de Asistencia":
-    st.header("📈 Reportes Métricos y Auditoría de Asistencia")
-    st.markdown(
-        "Control gerencial de incidencias, retardos y bonos semanales en tiempo real."
-    )
-
-    st.session_state.asistencias = cargar_datos_asistencias()
-    if not st.session_state.asistencias:
-        st.info("ℹ️ Aún no hay registros en el checador biométrico.")
+    st.header("📈 Auditoría y Reportes de Asistencia")
+    asistencias = cargar_datos_asistencias()
+    if not asistencias:
+        st.info("Sin registros de asistencia.")
     else:
-        df_reportes = pd.DataFrame(st.session_state.asistencias)
-
-        col_m1, col_m2, col_m3 = st.columns(3)
-        with col_m1:
-            st.metric(label="Total Registros Biométricos", value=len(df_reportes))
-        with col_m2:
-            retardos = len(df_reportes[df_reportes["Estado"] == "RETARDO"])
-            st.metric(
-                label="Incidencias / Retardos",
-                value=retardos,
-                delta=f"-{retardos}" if retardos > 0 else "0",
-                delta_color="inverse",
-            )
-        with col_m3:
-            bonos_ok = len(
-                df_reportes[
-                    df_reportes["Bono Asistencia/Puntualidad"].str.contains(
-                        "SÍ"
-                    )
-                ]
-            )
-            st.metric(label="Bonos Ganados", value=bonos_ok)
-
-        st.subheader("📋 Tabla de Auditoría Operativa")
-        st.dataframe(df_reportes, use_container_width=True)
-
-        csv_data = df_reportes.to_csv(index=False).encode("utf-8")
+        df_asist = pd.DataFrame(asistencias)
+        st.dataframe(df_asist, use_container_width=True)
         st.download_button(
-            label="📥 Exportar Reporte de Asistencia a CSV (Excel)",
-            data=csv_data,
-            file_name=f"Reporte_Asistencia_AVM_{datetime.now().strftime('%Y-%m-%d')}.csv",
+            "📥 Exportar Asistencias",
+            df_asist.to_csv(index=False).encode("utf-8"),
+            file_name="Asistencias_AVM.csv",
             mime="text/csv",
         )
 
-# --- 📄 GENERACIÓN DE CONTRATOS ---
+# --- 📄 CONTRATOS ---
 elif menu == "📄 Generación de Contratos":
-    st.header("📄 Generador de Contratos Laborales en Word")
-
-    st.session_state.empleados = cargar_datos_empleados()
-    if not st.session_state.empleados:
-        st.warning(
-            "⚠️ Primero registre personal en la sección 'Registro de Personal'."
-        )
+    st.header("📄 Generador de Contratos Laborales")
+    empleados = cargar_datos_empleados()
+    if not empleados:
+        st.warning("⚠️ Sin personal registrado.")
     else:
-        tipo_contrato = st.radio(
-            "Seleccione Tipo de Contrato a Generar",
-            ["Sujeto a Prueba (30 Días)", "Tiempo Indeterminado"],
+        tipo_c = st.radio(
+            "Tipo", ["Sujeto a Prueba (30 Días)", "Tiempo Indeterminado"]
         )
-        nombres_empleados = [e["Nombre"] for e in st.session_state.empleados]
-        emp_seleccionado = st.selectbox(
-            "Seleccionar Trabajador", nombres_empleados
+        emp_c = st.selectbox(
+            "Trabajador", [e["Nombre"] for e in empleados]
         )
-        datos = next(
-            e
-            for e in st.session_state.empleados
-            if e["Nombre"] == emp_seleccionado
-        )
-
-        if st.button("📥 Generar y Descargar Contrato en Word"):
+        datos = next(e for e in empleados if e["Nombre"] == emp_c)
+        if st.button("📥 Generar Documento Word"):
             doc = Document()
-            titulo_contrato = (
-                "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA"
-                if "Prueba" in tipo_contrato
-                else "CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO"
+            doc.add_heading(
+                f"CONTRATO LABORAL - {datos['Nombre']}", level=1
             )
-            doc.add_heading(titulo_contrato, level=1)
-
-            texto_cuerpo = f"""CONTRATO INDIVIDUAL DE TRABAJO QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, S.A. DE C.V., Y POR LA OTRA, {datos['Nombre']}, AL TENOR DE LAS SIGUIENTES CLAUSULAS Y DECLARACIONES:
-
-I. Declara el PATRÓN ser una empresa legalmente constituida con domicilio en Calle Santa Bárbara número 141, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juárez, Nuevo León.
-
-II. Declara el TRABAJADOR llamarse {datos['Nombre']}, de nacionalidad {datos['Nacionalidad']}, sexo {datos['Sexo']}, estado civil {datos['Estado Civil']}, con CURP {datos['CURP']}, RFC {datos['RFC']}, NSS {datos['NSS']} y domicilio en {datos['Domicilio']}.
-
-CLÁUSULAS:
-PRIMERA. El TRABAJADOR prestará sus servicios desempeñando el puesto de {datos['Puesto']}.
-SEGUNDA. El salario semanal será de {datos['Salario Semanal']}, cubriéndose los viernes de cada semana. Se otorgan bonos de asistencia y puntualidad condicionados al registro biométrico puntual.
-TERCERA. Las demás condiciones se rigen por la Ley Federal del Trabajo y el Reglamento Interior de Trabajo.
-
-Se firma por duplicado en Ciudad Benito Juárez, Nuevo León.
-
-EL PATRÓN
-AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE S.A. DE C.V.
-C. ABNER VELAZQUEZ MORALES
-
-__________________________________
-
-EL TRABAJADOR
-{datos['Nombre']}
-
-__________________________________
-"""
-            for parrafo in texto_cuerpo.split("\n\n"):
-                p_limpio = parrafo.strip()
-                if p_limpio:
-                    doc.add_paragraph(p_limpio)
-
+            doc.add_paragraph(
+                f"Empresa: AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE S.A. DE C.V.\nPuesto: {datos['Puesto']}\nSalario: {datos['Salario Semanal']}"
+            )
             buffer = BytesIO()
             doc.save(buffer)
             buffer.seek(0)
-
-            st.download_button(
-                label="📥 Descargar Documento Word Listo",
-                data=buffer,
-                file_name=f"Contrato_{tipo_contrato.split()[0]}_{datos['Nombre'].replace(' ', '_')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            registrar_auditoria(
+                st.session_state.usuario_actual,
+                "CONTRATO",
+                f"Generó contrato para {datos['Nombre']}",
             )
+            st.download_button(
+                "📥 Descargar Word",
+                buffer,
+                file_name=f"Contrato_{datos['Nombre'].replace(' ', '_')}.docx",
+            )
+
+# --- 🛡️ PANEL DE ADMINISTRADOR MAESTRO ---
+elif menu == "🛡️ Panel de Administrador (Usuarios y Auditoría)":
+    if st.session_state.rol_actual != "Administrador":
+        st.error(
+            "⛔ Acceso restringido exclusivamente al Administrador Maestro."
+        )
+    else:
+        st.header("🛡️ Panel de Control de Administrador")
+
+        tab1, tab2 = st.tabs(
+            ["👥 Gestión de Usuarios de la App", "📋 Bitácora de Auditoría Maestro"]
+        )
+
+        with tab1:
+            st.subheader("Dar de Alta Nuevo Usuario para Codificar / Operar")
+            with st.form("form_nuevo_usuario"):
+                nuevo_user = st.text_input("Nombre de Usuario")
+                nuevo_pass = st.text_input(
+                    "Contraseña Temporal", type="password"
+                )
+                nuevo_rol = st.selectbox(
+                    "Rol de Acceso", ["Operador", "Administrador"]
+                )
+                btn_crear = st.form_submit_button(
+                    "➕ Registrar Nuevo Usuario"
+                )
+
+                if btn_crear:
+                    if nuevo_user and nuevo_pass:
+                        lista_u = cargar_usuarios()
+                        if any(u["Usuario"] == nuevo_user for u in lista_u):
+                            st.error("El usuario ya existe.")
+                        else:
+                            lista_u.append(
+                                {
+                                    "Usuario": nuevo_user,
+                                    "Password": nuevo_pass,
+                                    "Rol": nuevo_rol,
+                                }
+                            )
+                            guardar_usuarios(lista_u)
+                            registrar_auditoria(
+                                st.session_state.usuario_actual,
+                                "ALTA USUARIO",
+                                f"Creó usuario '{nuevo_user}' con rol '{nuevo_rol}'",
+                            )
+                            st.success(
+                                f"¡Usuario {nuevo_user} creado con éxito!"
+                            )
+                    else:
+                        st.error("Complete todos los campos.")
+
+            st.subheader("Usuarios con Acceso Autorizado")
+            st.dataframe(
+                pd.DataFrame(cargar_usuarios())[["Usuario", "Rol"]],
+                use_container_width=True,
+            )
+
+        with tab2:
+            st.subheader(
+                "📋 Registro Central de Auditoría (Quién entró y qué editó)"
+            )
+            if os.path.exists(DB_AUDITORIA) and os.path.getsize(DB_AUDITORIA) > 0:
+                df_auditoria = pd.read_csv(DB_AUDITORIA)
+                st.dataframe(df_auditoria, use_container_width=True)
+
+                st.download_button(
+                    "📥 Descargar Respaldo Total de Auditoría (CSV)",
+                    df_auditoria.to_csv(index=False).encode("utf-8"),
+                    file_name=f"Auditoria_AVM_{datetime.now().strftime('%Y-%m-%d')}.csv",
+                    mime="text/csv",
+                )
+            else:
+                st.info("Aún no hay registros en la bitácora de auditoría.")
