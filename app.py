@@ -79,6 +79,7 @@ DB_FILE = "personal_avm.csv"
 DB_ASISTENCIA = "asistencias_avm.csv"
 DB_USUARIOS = "usuarios_avm.csv"
 DB_AUDITORIA = "auditoria_avm.csv"
+DB_PUNTOS = "puntos_trabajo_avm.csv"
 
 
 # Inicializar Administrador Maestro por defecto
@@ -233,6 +234,7 @@ opciones_menu = [
     "📊 Módulo Comercial (Cotizador)",
     "👥 Registro de Personal",
     "📥 Reporte de Personal (Excel)",
+	"🏢 Catálogo Puntos de Trabajo",
 	"📱 Terminal Móvil (Punto de Trabajo)",
     "👆 Checador Biométrico de Huella",
     "📈 Reportes Métricos de Asistencia",
@@ -704,6 +706,48 @@ elif menu == "👆 Checador Biométrico de Huella":
     if asistencias:
         st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
 
+# --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
+
+elif menu == "🏢 Catálogo Puntos de Trabajo":
+    st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
+    st.markdown("---")
+
+    with st.form("form_punto"):
+        nombre_punto = st.text_input("Nombre de la Instalación / Cliente")
+        ubicacion = st.text_input("Dirección o Sector")
+        btn_guardar_punto = st.form_submit_button("💾 Guardar Punto de Trabajo")
+
+        if btn_guardar_punto:
+            if nombre_punto:
+                puntos = cargar_datos(
+                    ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
+                )
+                puntos.append({
+                    "NombrePunto": nombre_punto,
+                    "Ubicacion": ubicacion,
+                    "FechaAlta": datetime.now().strftime("%Y-%m-%d"),
+                })
+                guardar_datos(
+                    ARCHIVO_PUNTOS,
+                    puntos,
+                    ["NombrePunto", "Ubicacion", "FechaAlta"],
+                )
+                registrar_auditoria(
+                    st.session_state.usuario_actual,
+                    "ALTA PUNTO",
+                    f"Se creó el punto {nombre_punto}",
+                )
+                st.success(f"¡Punto de trabajo '{nombre_punto}' registrado con éxito!")
+            else:
+                st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
+
+    st.markdown("### 📋 Puntos de Trabajo Actuales")
+    puntos_act = cargar_datos(ARCHIVO_PUNTOS, [])
+    if puntos_act:
+        st.dataframe(puntos_act, use_container_width=True)
+    else:
+        st.info("Aún no hay puntos de trabajo dados de alta.")
+		
 # --- 📱 TERMINAL MÓVIL (PUNTO DE TRABAJO) ---
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
     st.markdown(
