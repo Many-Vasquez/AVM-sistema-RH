@@ -116,7 +116,7 @@ def registrar_auditoria(usuario, accion, detalle):
     df_log.to_csv(DB_AUDITORIA, index=False)
 
 def cargar_datos_puntos(lista):
-    if path.exists(DB_PUNTOS) and os.path.getsize(DB_PUNTOS) > 0:
+    if os.path.exists(DB_PUNTOS) and os.path.getsize(DB_PUNTOS) > 0:
         try:
             return pd.read_csv(DB_PUNTOS).to_dict("records")
         except Exception:
