@@ -81,7 +81,7 @@ DB_USUARIOS = "usuarios_avm.csv"
 DB_AUDITORIA = "auditoria_avm.csv"
 
 
-# Inicializar Administrador por defecto si no existe la BD de usuarios
+# Inicializar Administrador Maestro por defecto
 def inicializar_usuarios():
     if not os.path.exists(DB_USUARIOS) or os.path.getsize(DB_USUARIOS) == 0:
         df_admin = pd.DataFrame(
@@ -756,38 +756,52 @@ elif menu == "📄 Generación de Contratos":
                 file_name=f"Contrato_{datos['Nombre'].replace(' ', '_')}.docx",
             )
 
-# --- 🛡️ PANEL DE ADMINISTRADOR MAESTRO ---
+# --- 🛡️ PANEL DE ADMINISTRADOR MAESTRO Y GESTIÓN DE USUARIOS ---
 elif menu == "🛡️ Panel de Administrador (Usuarios y Auditoría)":
     if st.session_state.rol_actual != "Administrador":
         st.error(
             "⛔ Acceso restringido exclusivamente al Administrador Maestro."
         )
     else:
-        st.header("🛡️ Panel de Control de Administrador")
-
-        tab1, tab2 = st.tabs(
-            ["👥 Gestión de Usuarios de la App", "📋 Bitácora de Auditoría Maestro"]
+        st.header("🛡️ Panel de Control y Seguridad del Administrador")
+        st.markdown(
+            "Gestión centralizada de credenciales de acceso, altas de usuarios y bitácora de auditoría."
         )
 
-        with tab1:
-            st.subheader("Dar de Alta Nuevo Usuario para Codificar / Operar")
-            with st.form("form_nuevo_usuario"):
-                nuevo_user = st.text_input("Nombre de Usuario")
-                nuevo_pass = st.text_input(
-                    "Contraseña Temporal", type="password"
-                )
-                nuevo_rol = st.selectbox(
-                    "Rol de Acceso", ["Operador", "Administrador"]
-                )
+        tab_usuarios, tab_credenciales, tab_auditoria = st.tabs(
+            [
+                "👥 Altas y Gestión de Usuarios",
+                "🔑 Cambiar Mis Credenciales de Admin",
+                "📋 Bitácora de Auditoría",
+            ]
+        )
+
+        with tab_usuarios:
+            st.subheader("➕ Dar de Alta Nuevo Usuario (Operador / Admin)")
+
+            with st.form("form_nuevo_usuario_maestro"):
+                col_u1, col_u2 = st.columns(2)
+                with col_u1:
+                    nuevo_user = st.text_input("Nombre de Usuario Nuevo")
+                    nuevo_rol = st.selectbox(
+                        "Rol de Acceso", ["Operador", "Administrador"]
+                    )
+                with col_u2:
+                    nuevo_pass = st.text_input(
+                        "Contraseña Temporal", type="password"
+                    )
+
                 btn_crear = st.form_submit_button(
-                    "➕ Registrar Nuevo Usuario"
+                    "💾 Registrar Nuevo Usuario en el Sistema"
                 )
 
                 if btn_crear:
                     if nuevo_user and nuevo_pass:
                         lista_u = cargar_usuarios()
                         if any(u["Usuario"] == nuevo_user for u in lista_u):
-                            st.error("El usuario ya existe.")
+                            st.error(
+                                f"El usuario '{nuevo_user}' ya existe en el sistema."
+                            )
                         else:
                             lista_u.append(
                                 {
@@ -803,18 +817,126 @@ elif menu == "🛡️ Panel de Administrador (Usuarios y Auditoría)":
                                 f"Creó usuario '{nuevo_user}' con rol '{nuevo_rol}'",
                             )
                             st.success(
-                                f"¡Usuario {nuevo_user} creado con éxito!"
+                                f"¡Usuario '{nuevo_user}' registrado con éxito!"
                             )
                     else:
-                        st.error("Complete todos los campos.")
+                        st.error(
+                            "Por favor complete el nombre de usuario y la contraseña."
+                        )
 
-            st.subheader("Usuarios con Acceso Autorizado")
-            st.dataframe(
-                pd.DataFrame(cargar_usuarios())[["Usuario", "Rol"]],
-                use_container_width=True,
+            st.markdown("---")
+            st.subheader("📋 Usuarios Activos en la Aplicación")
+            usuarios_actuales = cargar_usuarios()
+            df_usuarios = pd.DataFrame(usuarios_actuales)[["Usuario", "Rol"]]
+            st.dataframe(df_usuarios, use_container_width=True)
+
+            st.markdown("### 🗑️ Revocar Acceso a Usuario")
+            nombres_usuarios_del = [
+                u["Usuario"]
+                for u in usuarios_actuales
+                if u["Usuario"] != st.session_state.usuario_actual
+            ]
+            if nombres_usuarios_del:
+                user_a_borrar = st.selectbox(
+                    "Seleccione usuario a eliminar", nombres_usuarios_del
+                )
+                if st.button("❌ Eliminar Acceso de este Usuario"):
+                    usuarios_actuales = [
+                        u
+                        for u in usuarios_actuales
+                        if u["Usuario"] != user_a_borrar
+                    ]
+                    guardar_usuarios(usuarios_actuales)
+                    registrar_auditoria(
+                        st.session_state.usuario_actual,
+                        "BAJA USUARIO",
+                        f"Eliminó al usuario '{user_a_borrar}'",
+                    )
+                    st.warning(
+                        f"Acceso revocado para el usuario '{user_a_borrar}'."
+                    )
+                    st.rerun()
+            else:
+                st.info(
+                    "No hay usuarios adicionales para eliminar (tu usuario actual está protegido)."
+                )
+
+        with tab_credenciales:
+            st.subheader(
+                "🔑 Actualizar Mi Nombre de Usuario y Contraseña de Administrador"
             )
 
-        with tab2:
+            with st.form("form_cambiar_admin"):
+                pass_actual = st.text_input(
+                    "Contraseña Actual", type="password"
+                )
+                nuevo_admin_user = st.text_input(
+                    "Nuevo Nombre de Administrador",
+                    value=st.session_state.usuario_actual,
+                )
+                nuevo_admin_pass = st.text_input(
+                    "Nueva Contraseña", type="password"
+                )
+                confirma_admin_pass = st.text_input(
+                    "Confirmar Nueva Contraseña", type="password"
+                )
+
+                btn_actualizar_admin = st.form_submit_button(
+                    "🔐 Guardar Cambios de Credenciales"
+                )
+
+                if btn_actualizar_admin:
+                    lista_u = cargar_usuarios()
+                    admin_actual = next(
+                        (
+                            u
+                            for u in lista_u
+                            if u["Usuario"]
+                            == st.session_state.usuario_actual
+                        ),
+                        None,
+                    )
+
+                    if (
+                        admin_actual
+                        and str(admin_actual["Password"]) == pass_actual
+                    ):
+                        if nuevo_admin_pass == confirma_admin_pass:
+                            if len(nuevo_admin_pass) >= 4:
+                                for u in lista_u:
+                                    if (
+                                        u["Usuario"]
+                                        == st.session_state.usuario_actual
+                                    ):
+                                        u["Usuario"] = nuevo_admin_user
+                                        u["Password"] = nuevo_admin_pass
+
+                                guardar_usuarios(lista_u)
+                                registrar_auditoria(
+                                    st.session_state.usuario_actual,
+                                    "CAMBIO CREDENCIALES",
+                                    "El administrador actualizó su usuario/contraseña",
+                                )
+                                st.session_state.usuario_actual = (
+                                    nuevo_admin_user
+                                )
+                                st.success(
+                                    "¡Credenciales actualizadas con éxito! Vuelve a iniciar sesión si es necesario."
+                                )
+                            else:
+                                st.error(
+                                    "La contraseña debe tener al menos 4 caracteres."
+                                )
+                        else:
+                            st.error(
+                                "Las nuevas contraseñas no coinciden. Verifícalas."
+                            )
+                    else:
+                        st.error(
+                            "La contraseña actual es incorrecta. No se pudieron aplicar los cambios."
+                        )
+
+        with tab_auditoria:
             st.subheader(
                 "📋 Registro Central de Auditoría (Quién entró y qué editó)"
             )
