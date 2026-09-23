@@ -233,6 +233,7 @@ opciones_menu = [
     "📊 Módulo Comercial (Cotizador)",
     "👥 Registro de Personal",
     "📥 Reporte de Personal (Excel)",
+	"📱 Terminal Móvil (Punto de Trabajo)",
     "👆 Checador Biométrico de Huella",
     "📈 Reportes Métricos de Asistencia",
     "📄 Generación de Contratos",
@@ -703,6 +704,82 @@ elif menu == "👆 Checador Biométrico de Huella":
     if asistencias:
         st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
 
+# --- 📱 TERMINAL MÓVIL (PUNTO DE TRABAJO) ---
+elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
+    st.markdown(
+        "<h2 style='text-align: center; color: #d4af37;'>Control Operativo en Campo</h2>",
+        unsafe_allow_html=True,
+    )
+
+    empleados = cargar_datos_empleados()
+    if not empleados:
+        st.warning("⚠️ No hay personal registrado en el sistema central.")
+    else:
+        nombres = [e["Nombre"] for e in empleados]
+        elemento_sel = st.selectbox("Seleccione su Nombre / Elemento", nombres)
+        datos_elem = next(e for e in empleados if e["Nombre"] == elemento_sel)
+
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            btn_entrada = st.button(
+                "🟢 REGISTRAR ENTRADA", use_container_width=True
+            )
+        with col_m2:
+            btn_salida = st.button(
+                "🔴 REGISTRAR SALIDA", use_container_width=True
+            )
+
+        if btn_entrada or btn_salida:
+            ahora = datetime.now()
+            tipo_mov = (
+                "Entrada de Turno" if btn_entrada else "Salida de Turno"
+            )
+            reg = {
+                "Fecha": ahora.strftime("%Y-%m-%d"),
+                "Nombre": datos_elem["Nombre"],
+                "NSS": datos_elem["NSS"],
+                "Movimiento": tipo_mov,
+                "Hora": ahora.strftime("%H:%M:%S"),
+                "Punto de Trabajo": "Instalación Cliente",
+            }
+            asistencias = cargar_datos_asistencias()
+            asistencias.append(reg)
+            guardar_datos_asistencias(asistencias)
+            registrar_auditoria(
+                st.session_state.usuario_actual,
+                "ASISTENCIA MÓVIL",
+                f"Fichaje {tipo_mov} para {datos_elem['Nombre']}",
+            )
+            st.success(
+                f"¡{tipo_mov} registrada correctamente a las {ahora.strftime('%H:%M:%S')}!"
+            )
+
+        st.markdown("---")
+        st.markdown("### 🔄 Reportar Novedad o Cambio de Turno")
+        with st.form("form_novedad_movil"):
+            tipo_novedad = st.selectbox(
+                "Tipo de Incidencia",
+                [
+                    "Cambio de Turno Solicitado",
+                    "Doble Turno / Cobertura",
+                    "Incidencia Operativa",
+                ],
+            )
+            comentario = st.text_area("Detalle de la novedad")
+            btn_enviar_nov = st.form_submit_button(
+                "📤 Enviar a Central en Tiempo Real"
+            )
+
+            if btn_enviar_nov:
+                registrar_auditoria(
+                    datos_elem["Nombre"],
+                    "NOVEDAD CAMPO",
+                    f"[{tipo_novedad}] {comentario}",
+                )
+                st.success(
+                    "¡Novedad enviada y registrada en la bitácora central!"
+                )
+				
 # --- 📈 REPORTES DE ASISTENCIA ---
 elif menu == "📈 Reportes Métricos de Asistencia":
     st.header("📈 Auditoría y Reportes de Asistencia")
