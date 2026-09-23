@@ -88,7 +88,7 @@ def inicializar_usuarios():
             [
                 {
                     "Usuario": "JOSE VASQUEZ",
-                    "Password": "UCALLI123",
+                    "Password": "12345",
                     "Rol": "Administrador",
                 }
             ]
