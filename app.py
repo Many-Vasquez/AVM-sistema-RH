@@ -736,121 +736,244 @@ elif menu == "📄 Generación de Contratos":
         if st.button("📥 Generar Documento Word"):
             doc = Document()
 
-            # Redacción completa del contrato integrada con los datos del sistema
-            texto_contrato = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['Nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 39-A, 39-B, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
+            if "Prueba" in tipo_c:
+                # Redacción exacta para Contrato Sujeto a Prueba (30 Días)
+                texto_contrato = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, SUJETO A UN PERIODO DE PRUEBA, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['Nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 39-A, 39-B, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
 
 D E C L A R A C I O N E S:
 
 I. Declara el PATRÓN:
-a) Ser una persona moral, debidamente constituida conforme a las leyes de la República Mexicana, según consta en la escritura pública número 6,948, pasada ante la fe del Notario Público número 127, con domicilio ubicado en Calle Santa Bárbara número 141, C. Asturias, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juárez, Nuevo León, Registro Federal de Contribuyentes AGI260413CK4 y tener como objeto social, entre otros, la prestación de servicios de seguridad privada, consistentes en la vigilancia, protección y resguardo de bienes muebles e inmuebles, así como de establecimientos comerciales, industriales, habitacionales y de servicios, mediante la utilización de recursos humanos debidamente capacitados. La prestación de servicios de seguridad intramuros, incluyendo el control de accesos y salidas, registro de personas y vehículos, realización de rondines y supervisión interna de instalaciones privadas, con la finalidad de prevenir actos delictivos, riesgos o siniestros. La administración y control de acceso por medio de personal, así como la implementación de protocolos de seguridad, supervisión operativa y control de ingreso y egreso en todo tipo de instalaciones.
-b) Que, para dar cumplimiento al objeto social o profesión consignado en la declaración anterior, requiere de personal capacitado y con experiencia para ocupar el puesto de {datos['Puesto']} para que realice las actividades consistentes, de manera enunciativa mas no limitativa, en:
-Vigilancia, protección y resguardo de bienes muebles e inmuebles, así como en establecimientos comerciales, industriales, habitaciones. Seguridad intramuros incluyendo el control de accesos y salidas, registro de personas y vehículos, realización de rondines y supervisión interna de instalaciones privadas, operación y monitoreo de sistemas de seguridad electrónica, sistemas de alarma, circuito cerrado de televisión, sistemas de control de accesos, sistemas de rastreo satelital y demás tecnologías relacionadas con la seguridad.
+	a) Ser una persona moral, debidamente constituida conforme a las leyes de la República Mexicana, según consta en la escritura pública número 6,948, pasada ante la fe del Notario Público número 127, con domicilio ubicado en Calle Santa Bárbara número 141, C. Asturias, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juárez, Nuevo León, Registro Federal de Contribuyentes AGI260413CK4 y tener como objeto social, entre otros, la prestación de servicios de seguridad privada, consistentes en la vigilancia, protección y resguardo de bienes muebles e inmuebles, así como de establecimientos comerciales, industriales, habitacionales y de servicios, mediante la utilización de recursos humanos debidamente capacitados. La prestación de servicios de seguridad intramuros, incluyendo el control de accesos y salidas, registro de personas y vehículos, realización de rondines y supervisión interna de instalaciones privadas, con la finalidad de prevenir actos delictivos, riesgos o siniestros. La administración y control de acceso por medio de personal, así como la implementación de protocolos de seguridad, supervisión operativa y control de ingreso y egreso en todo tipo de instalaciones.
+	b) Que, para dar cumplimiento al objeto social o profesión consignado en la declaración anterior, requiere de personal capacitado y con experiencia para ocupar el puesto de {datos['Puesto']} para que realice las actividades consistentes, de manera enunciativa mas no limitativa, en:
+	Vigilancia, protección y resguardo de bienes muebles e inmuebles, así como en establecimientos comerciales, industriales, habitaciones. Seguridad intramuros incluyendo el control de accesos y salidas, registro de personas y vehículos, realización de rondines y supervisión interna de instalaciones privadas, operación y monitoreo de sistemas de seguridad electrónica, sistemas de alarma, circuito cerrado de televisión, sistemas de control de accesos, sistemas de rastreo satelital y demás tecnologías relacionadas con la seguridad.
 
 II. Declara el TRABAJADOR:
-a) Ser una persona física, de nacionalidad {datos['Nacionalidad']}, de sexo {datos['Sexo']}, con fecha de nacimiento el {datos.get('Fecha de Nacimiento', '[No especificada]')}, estado civil {datos.get('Estado Civil', '[No especificado]')}, Clave Única de Registro de Población {datos['CURP']} y Registro Federal de Contribuyentes {datos['RFC']}, con domicilio en {datos['Domicilio']}.
-b) Que cuenta con los conocimientos, habilidades y experiencia necesarios para prestar al PATRÓN los servicios mencionados en el inciso b) de la Declaración I.
-c) Que está de acuerdo en prestar los servicios descritos en el presente contrato, sujeto a un periodo de prueba de 30 (treinta) días, según se estipula más adelante.
+	a) Ser una persona física, de nacionalidad {datos['Nacionalidad']}, de sexo {datos['Sexo']}, con fecha de nacimiento el {datos.get('Fecha de Nacimiento', '[No especificada]')}, estado civil {datos.get('Estado Civil', '[No especificado]')}, Clave Única de Registro de Población {datos['CURP']} y Registro Federal de Contribuyentes {datos['RFC']}, con domicilio en {datos['Domicilio']}.
+	b) Que cuenta con los conocimientos, habilidades y experiencia necesarios para prestar al PATRÓN los servicios mencionados en el inciso b) de la Declaración I.
+	c) Que está de acuerdo en prestar los servicios descritos en el presente contrato, sujeto a un periodo de prueba de 30 (treinta) días, según se estipula más adelante.
 
 III. Declaran ambas partes:
-a) Que cuentan con las facultades suficientes para la celebración del presente contrato y obligarse a los términos de este, reconociéndose mutuamente la personalidad con la que comparecen.
+	a) Que cuentan con las facultades suficientes para la celebración del presente contrato y obligarse a los términos de este, reconociéndose mutuamente la personalidad con la que comparecen.
 
 En consideración a las Declaraciones que anteceden, las partes otorgan las siguientes:
 
 C L Á U S U L A S:
 
-PRIMERA. El presente contrato se celebra por TIEMPO INDETERMINADO, quedando sujeto "EL TRABAJADOR" a un PERIODO DE PRUEBA DE 1 MES (30 DÍAS) contados a partir de la fecha de firma del presente contrato, con fundamento en el párrafo segundo del Artículo 39-A de la Ley Federal del Trabajo, toda vez que el puesto a desempeñar requiere de labores técnicas, operativas y/o conocimientos especializados en materia de seguridad privada, prevención de riesgos y manejo de equipos tácticos/tecnológicos.
+	PRIMERA. El presente contrato se celebra por TIEMPO INDETERMINADO, quedando sujeto "EL TRABAJADOR" a un PERIODO DE PRUEBA DE 1 MES (30 DÍAS) contados a partir de la fecha de firma del presente contrato, con fundamento en el párrafo segundo del Artículo 39-A de la Ley Federal del Trabajo, toda vez que el puesto a desempeñar requiere de labores técnicas, operativas y/o conocimientos especializados en materia de seguridad privada, prevención de riesgos y manejo de equipos tácticos/tecnológicos.
 Durante dicho periodo de prueba, "EL PATRÓN" evaluará si "EL TRABAJADOR" cumple con los requisitos, conocimientos y aptitudes necesarios para el puesto. De no acreditarlos a satisfacción de "EL PATRÓN" mediante la evaluación del Comité Mixto de Productividad, Capacitación y Adiestramiento, podrá dar por terminada la relación de trabajo en cualquier momento, sin responsabilidad alguna para la Empresa y sin obligación de pagar indemnización constitucional alguna, procediendo únicamente al pago del finiquito proporcional de las prestaciones devengadas.
 
-SEGUNDA. Se hace constar que el PATRÓN celebra el presente contrato fundado en las declaraciones del TRABAJADOR en el sentido de que cuenta con los requisitos y conocimientos necesarios para desempeñar adecuadamente las actividades inherentes al cargo para el que se le contrata. Al término del periodo de prueba, de no acreditar el TRABAJADOR que satisface los requisitos y conocimientos necesarios para desarrollar las labores, a juicio del patrón, tomando en cuenta la opinión de la Comisión Mixta de Productividad, Capacitación y Adiestramiento en los términos de la Ley Federal del Trabajo, así́ como la naturaleza de la categoría o puesto, se dará́ por terminada la relación de trabajo, sin responsabilidad para el PATRÓN.
+	SEGUNDA. Se hace constar que el PATRÓN celebra el presente contrato fundado en las declaraciones del TRABAJADOR en el sentido de que cuenta con los requisitos y conocimientos necesarios para desempeñar adecuadamente las actividades inherentes al cargo para el que se le contrata. Al término del periodo de prueba, de no acreditar el TRABAJADOR que satisface los requisitos y conocimientos necesarios para desarrollar las labores, a juicio del patrón, tomando en cuenta la opinión de la Comisión Mixta de Productividad, Capacitación y Adiestramiento en los términos de la Ley Federal del Trabajo, así́ como la naturaleza de la categoría o puesto, se dará́ por terminada la relación de trabajo, sin responsabilidad para el PATRÓN.
 
-TERCERA. El TRABAJADOR prestará sus servicios en el domicilio del PATRÓN o en cualquier otro domicilio en el que se ubiquen las oficinas o locales del mismo. El TRABAJADOR manifiesta desde este momento su conformidad con cualquier eventual cambio en el lugar de la prestación de sus servicios. El Trabajador acepta que, debido a la naturaleza de los servicios de seguridad privada, podrá ser asignado temporal o permanentemente a distintos centros de trabajo, clientes, instalaciones o ubicaciones donde el Patrón tenga contratos de prestación de servicios. Dichos cambios no constituirán modificación unilateral de las condiciones de trabajo siempre que se respeten los derechos laborales del trabajador.
+	TERCERA. El TRABAJADOR prestará sus servicios en el domicilio del PATRÓN o en cualquier otro domicilio en el que se ubiquen las oficinas o locales del mismo. El TRABAJADOR, manifiesta desde este momento su conformidad con cualquier eventual cambio en el lugar de la prestación de sus servicios. El Trabajador acepta que, debido a la naturaleza de los servicios de seguridad privada, podrá ser asignado temporal o permanentemente a distintos centros de trabajo, clientes, instalaciones o ubicaciones donde el Patrón tenga contratos de prestación de servicios. Dichos cambios no constituirán modificación unilateral de las condiciones de trabajo siempre que se respeten los derechos laborales del trabajador.
 
-CUARTA. El Trabajador se obliga a cumplir estrictamente las consignas generales y particulares establecidas para cada servicio, incluyendo procedimientos de acceso, control de visitantes, vigilancia perimetral, rondines y reportes. De conformidad con el Reglamento Interior de Trabajo de la Empresa, las funciones del TRABAJADOR están limitadas estrictamente a la prevención, vigilancia y control de accesos. En caso de emergencias (tales como siniestros, robos en proceso o accidentes), la intervención del TRABAJADOR se limitará de manera enunciativa más no limitativa a: activar los protocolos de seguridad pasiva, dar aviso inmediato a los cuerpos de auxilio públicos (policía, bomberos, ambulancias), reportar a la central de operaciones de El PATRÓN y auxiliar en la evacuación segura del personal. Queda estrictamente prohibido realizar acciones de confrontación o tácticas que pongan en riesgo su integridad física o la de terceros. La omisión injustificada en el cumplimiento de estas consignas será sancionada conforme a la Ley Federal del Trabajo y al Reglamento Interior de Trabajo.
+	CUARTA. El Trabajador se obliga a cumplir estrictamente las consignas generales y particulares establecidas para cada servicio, incluyendo procedimientos de acceso, control de visitantes, vigilancia perimetral, rondines y reportes.  De conformidad con el Reglamento Interior de Trabajo de la Empresa, las funciones del TRABAJADOR están limitadas estrictamente a la prevención, vigilancia y control de accesos. En caso de emergencias (tales como siniestros, robos en proceso o accidentes), la intervención del TRABAJADOR se limitará de manera enunciativa más no limitativa a: activar los protocolos de seguridad pasiva, dar aviso inmediato a los cuerpos de auxilio públicos (policía, bomberos, ambulancias), reportar a la central de operaciones de El PATRÓN y auxiliar en la evacuación segura del personal. Queda estrictamente prohibido realizar acciones de confrontación o tácticas que pongan en riesgo su integridad física o la de terceros. La omisión injustificada en el cumplimiento de estas consignas será sancionada conforme a la Ley Federal del Trabajo y al Reglamento Interior de Trabajo.
 
-QUINTA. El PATRÓN pagará al TRABAJADOR, por los servicios prestados de conformidad con este contrato, un salario ordinario de {datos['Salario Semanal']} pesos semanales, el cual se cubrirá los viernes de cada semana. En este importe ya se encuentra incluido el pago correspondiente a los séptimos días (días de descanso semanal) y los días festivos de descanso obligatorio en términos de los artículos 69 y 74 de la Ley Federal del Trabajo. 
+	QUINTA. El PATRÓN pagará al TRABAJADOR, por los servicios prestados de conformidad con este contrato, un salario ordinario de {datos['Salario Semanal']} pesos semanales, el cual se cubrirá los viernes de cada semana. En este importe ya se encuentra incluido el pago correspondiente a los séptimos días (días de descanso semanal) y los días festivos de descanso obligatorio en términos de los artículos 69 y 74 de la Ley Federal del Trabajo. 
 De los Bonos de Asistencia y Puntualidad: Adicionalmente al salario ordinario, el PATRÓN otorgará al TRABAJADOR un Bono de Asistencia Semanal por la cantidad de $450.00 pesos (cuatrocientos cincuenta pesos 00/100 M.N.) y un Bono de Puntualidad Semanal por la cantidad de $450.00 pesos (cuatrocientos cincuenta pesos 00/100 M.N.).
 El TRABAJADOR queda estrictamente obligado al cumplimiento del 100% de sus asistencias y de sus horarios de entrada durante la semana correspondiente para devengar dichos conceptos. Las partes acuerdan que el nacimiento del derecho a recibir estos bonos está condicionado estrictamente al cumplimiento perfecto de la asistencia y puntualidad; por lo tanto, en caso de que el TRABAJADOR incurra en una sola falta de asistencia (justificada o injustificada) o en un solo retardo durante el periodo semanal, no se generará ni se pagará el bono correspondiente a la falta incurrida (ya sea de asistencia, de puntualidad, o ambos), sin responsabilidad alguna para el PATRÓN.
-En caso de que el día de pago sea de descanso obligatorio o festivo bancario, el depósito se efectuará el día hábil inmediato anterior. El pago del salario y de las prestaciones que correspondan se realizará exclusivamente mediante transferencia electrónica de fondos a la cuenta bancaria institucional que EL PATRÓN apertura a nombre del TRABAJADOR, o a la cuenta que este designe por escrito. Los costos de apertura y manejo de cuenta correrán por cuenta de la Empresa. Al importe del salario y bonos se le realizarán las deducciones legales de impuestos y Seguridad Social correspondientes. Por su parte, el TRABAJADOR se obliga, en cualquier caso, a firmar el recibo correspondiente por los pagos efectuados. Si, por alguna razón, éste no firmara el recibo, las partes aceptan que el simple depósito bancario produce efecto liberatorio de pago para el PATRÓN.
+En caso de que el día de pago sea de descanso obligatorio o festivo bancario, el depósito se efectuará el día hábil inmediato anterior. El pago del salario y de las prestaciones que correspondan se realizará exclusivamente mediante transferencia electrónica de fondos a la cuenta bancaria institucional que EL PATRÓN apertura a nombre del TRABAJADOR, o a la cuenta que este designe por escrito. Los costos de apertura y manejo de cuenta correrán por cuenta de la Empresa. Al importe del salario y bonos se le realizarán las deducciones legales de impuestos y Seguridad Social correspondientes. 
+	Por su parte, el TRABAJADOR se obliga, en cualquier caso, a firmar el recibo correspondiente por los pagos efectuados. Si, por alguna razón, éste no firmara el recibo, las partes aceptan que el simple depósito bancario produce efecto liberatorio de pago para el PATRÓN.  
 
-SEXTA. La duración máxima de la semana laboral será de 45 (cuarenta y cinco) horas, distribuidas de lunes a sábado de cada semana, de conformidad con lo dispuesto por el segundo párrafo del artículo 59 de la Ley Federal del Trabajo. 
-Debido a la naturaleza especializada de las actividades de seguridad y vigilancia que presta la Empresa, y para garantizar la continuidad y la cobertura ininterrumpida de los servicios contratados por nuestros clientes, las partes acuerdan expresamente que las jornadas y horarios de trabajo no serán fijos ni permanentes. El TRABAJADOR prestará sus servicios bajo esquemas de turnos rotativos (tales como 8x16 horas, 12x12 horas, 24x24 horas, o los esquemas que operativamente se requieran), según el rol que le sea comunicado oportunamente por su superior inmediato o supervisor de zona. 
-Dentro de la jornada continua, el TRABAJADOR dispondrá de un lapso de 30 (treinta) minutos intermedios para tomar alimentos y reposar, el cual será considerado como tiempo efectivo de trabajo y se adaptará de forma flexible a las necesidades de cada servicio; durante este periodo, el trabajador podrá utilizar las sillas o asientos destinados para tal efecto de acuerdo con el artículo 132 fracción V de la Ley Federal del Trabajo. El PATRÓN podrá modificar en cualquier tiempo el horario, rol y la rotación de turnos conforme a las necesidades operativas de la Empresa. 
-El TRABAJADOR no laborará tiempo extra en su jornada normal, ni durante días de descanso, salvo previa orden expresa y por escrito emitida por el representante del PATRÓN; orden sin la cual no se reconocerá ni se pagará tiempo extraordinario alguno.
+	SEXTA. La duración máxima de la semana laboral será de 45 (cuarenta y cinco) horas, distribuidas de lunes a sábado de cada semana, de conformidad con lo dispuesto por el segundo párrafo del artículo 59 de la Ley Federal del Trabajo. 
+Debido a la naturaleza especializada de las actividades de seguridad y vigilancia que presta la Empresa, y para garantizar la continuidad y la cobertura ininterrumpida de los servicios contratados por nuestros clientes, las partes acuerdan expresamente que las jornadas y horarios de trabajo no serán fijos ni permanentes. El TRABAJADOR prestará sus servicios bajo esquemas de turnos rotativos (tales como 8x16 horas, 12x12 horas, 24x24 horas, o los esquemas que operativamente se requieran) , según el rol que le sea comunicado oportunamente por su superior inmediato o supervisor de zona. 
+Dentro de la jornada continua, el TRABAJADOR dispondrá de un lapso de 30 (treinta) minutos intermedios para tomar alimentos y reposar, el cual será considerado como tiempo efectivo de trabajo y se adaptará de forma flexible a las necesidades de cada servicio ; durante este periodo, el trabajador podrá utilizar las sillas o asientos destinados para tal efecto de acuerdo con el artículo 132 fracción V de la Ley Federal del Trabajo. El PATRÓN podrá modificar en cualquier tiempo el horario, rol y la rotación de turnos conforme a las necesidades operativas de la Empresa. 
+El TRABAJADOR no laborará tiempo extra en su jornada normal, ni durante días de descanso, salvo previa orden expresa y por escrito emitida por el representante del PATRÓN ; orden sin la cual no se reconocerá ni se pagará tiempo extraordinario alguno. 
 
-SEPTIMA. Las partes convienen en que los días de descanso semanal serán el domingo, sin perjuicio de que el PATRÓN modifique dichos días de descanso semanal cuando las necesidades del servicio así lo requieran.
+	SEPTIMA. Las partes convienen en que los días de descanso semanal serán el domingo, sin perjuicio de que el PATRÓN modifique dichos días de descanso semanal cuando las necesidades del servicio así lo requieran. 
 
-OCTAVA. Cuando el TRABAJADOR tenga más de un año de servicios, disfrutará de doce días de vacaciones anuales en los términos y condiciones que establece la Ley Federal del Trabajo. Adicionalmente, el PATRÓN pagará al TRABAJADOR una prima vacacional del 25% sobre el salario que le corresponda por sus días de vacaciones, en términos de lo dispuesto por el Artículo 80 de la Ley Federal del Trabajo.
+	OCTAVA. Cuando el TRABAJADOR tenga más de un año de servicios, disfrutará de doce días de vacaciones anuales en los términos y condiciones que establece la Ley Federal del Trabajo. Adicionalmente, el PATRÓN pagará al TRABAJADOR una prima vacacional del 25% sobre el salario que le corresponda por sus días de vacaciones, en términos de lo dispuesto por el Artículo 80 de la Ley Federal del Trabajo.
 
-NOVENA. Serán días de descanso obligatorio los que señala el Artículo 74 de la Ley Federal del Trabajo. Atendiendo a la naturaleza especializada de los servicios de seguridad y vigilancia de la Empresa, la cobertura de estos días estará sujeta a los roles operativos cambiantes y requerimientos de los clientes asignados por el supervisor de zona, obligándose el TRABAJADOR a prestar sus servicios si la operación lo requiere, previo pago de las compensaciones legales aplicables.
+	NOVENA. Serán días de descanso obligatorio los que señala el Artículo 74 de la Ley Federal del Trabajo. Atendiendo a la naturaleza especializada de los servicios de seguridad y vigilancia de la Empresa, la cobertura de estos días estará sujeta a los roles operativos cambiantes y requerimientos de los clientes asignados por el supervisor de zona, obligándose el TRABAJADOR a prestar sus servicios si la operación lo requiere, previo pago de las compensaciones legales aplicables.
 
-DECIMA. El PATRÓN pagará al TRABAJADOR un aguinaldo anual, equivalente a 15 días de salario, en los términos que establece el Artículo 87 de la Ley Federal del Trabajo, mismo que deberá cubrirse a más tardar el 20 de diciembre de cada año.
+	DECIMA. El PATRÓN pagará al TRABAJADOR un aguinaldo anual, equivalente a 15 días de salario, en los términos que establece el Artículo 87 de la Ley Federal del Trabajo, mismo que deberá cubrirse a más tardar el 20 de diciembre de cada año.
 
-DECIMA PRIMERA. EQUIPO Y UNIFORMES. El Patrón proporcionará los uniformes, gafetes, equipo de protección y herramientas necesarias para el desempeño de sus funciones. Los radios, teléfonos, cámaras corporales, dispositivos electrónicos y demás equipos proporcionados por la empresa deberán utilizarse exclusivamente para fines laborales. Queda prohibido alterar, modificar, cambiar, dañar, prestar o utilizar dichos equipos para fines personales. El Trabajador se obliga a utilizarlos adecuadamente y devolverlos al concluir la relación laboral.
+	DECIMA PRIMERA. EQUIPO Y UNIFORMES. El Patrón proporcionará los uniformes, gafetes, equipo de protección y herramientas necesarias para el desempeño de sus funciones. Los radios, teléfonos, cámaras corporales, dispositivos electrónicos y demás equipos proporcionados por la empresa deberán utilizarse exclusivamente para fines laborales.
+Queda prohibido alterar, modificar, cambiar, dañar, prestar o utilizar dichos equipos para fines personales. El Trabajador se obliga a utilizarlos adecuadamente y devolverlos al concluir la relación laboral.
 
-DECIMA SEGUNDA. OBLIGACIONES DEL TRABAJADOR. Además de las obligaciones previstas en el artículo 134 de la Ley Federal del Trabajo, el TRABAJADOR se obliga estrictamente a cumplir con lo establecido en el Reglamento Interior de Trabajo de la Empresa, comprometiéndose de manera enunciativa más no limitativa a: 
-- Cumplimiento de Instrucciones y Consignas: Acatar con eficacia, cuidado y esmero las instrucciones de trabajo, órdenes patronales y las consignas específicas o particulares establecidas para el puesto o servicio asignado. 
-- Puntualidad y Asistencia: Presentarse puntualmente a sus labores respetando los horarios y roles de turnos asignados, registrando personalmente su entrada y salida en los controles que determine el PATRÓN. 
-- Permanencia y Protocolo de Relevo: Permanecer de forma estrictamente personal en su puesto de vigilancia y control de accesos hasta que se presente físicamente su relevo y se realice la entrega formal de la bitácora y equipo. 
-- Estricta Confidencialidad y Reserva: Guardar absoluta reserva y discreción sobre los asuntos de la Empresa y sus clientes. Queda estrictamente prohibido fotografiar, videograbar, reproducir, extraer o difundir por cualquier medio el contenido de bitácoras, controles de acceso, sistemas de monitoreo o pantallas de CCTV. 
-- Uso y Portación del Uniforme: Mantener una imagen personal aseada y profesional, portando correctamente el uniforme completo, limpio, fajado y con el gafete de identificación visible. 
-- Inspección y Conservación de Equipo: Revisar, inspeccionar y conservar en buen estado las herramientas, útiles, uniformes y el equipo táctico o de comunicación proporcionados por el PATRÓN. 
-- Reporte de Incidencias: Informar de manera inmediata a su supervisor de zona o a la central de operaciones sobre cualquier incidente de seguridad, anomalía, siniestro o situación de riesgo detectada. 
-- Conducta Profesional: Mantener en todo momento un trato respetuoso, digno y profesional con los clientes, visitantes, proveedores y compañeros de trabajo. 
-- Exámenes de Control y Confianza: Someterse a los exámenes médicos, psicométricos, de alcoholemia y toxicológicos aleatorios o periódicos que determine la Empresa o las autoridades competentes. 
-- Medidas Preventivas de Seguridad e Higiene: Observar y acatar rigurosamente todas las medidas preventivas, higiénicas y de seguridad que indiquen las autoridades y el PATRÓN.
+	DECIMA SEGUNDA. OBLIGACIONES DEL TRABAJADOR. Además de las obligaciones previstas en el artículo 134 de la Ley Federal del Trabajo, el TRABAJADOR se obliga estrictamente a cumplir con lo establecido en el Reglamento Interior de Trabajo de la Empresa, comprometiéndose de manera enunciativa más no limitativa a: 
+Cumplimiento de Instrucciones y Consignas: Acatar con eficacia, cuidado y esmero las instrucciones de trabajo, órdenes patronales y las consignas específicas o particulares establecidas para el puesto o servicio asignado. 
+Puntualidad y Asistencia: Presentarse puntualmente a sus labores respetando los horarios y roles de turnos asignados, registrando personalmente su entrada y salida en los controles (tarjeta, bitácora o lector) que determine el PATRÓN. 
+Permanencia y Protocolo de Relevo: Permanecer de forma estrictamente personal en su puesto de vigilancia y control de accesos hasta que se presente físicamente su relevo y se realice la entrega formal de la bitácora y equipo; reconociendo que el abandono del puesto sin autorización expresa del supervisor constituirá una falta grave. 
+Estricta Confidencialidad y Reserva: Guardar absoluta reserva y discreción sobre los asuntos de la Empresa y sus clientes. Queda estrictamente prohibido fotografiar, videograbar, reproducir, extraer o difundir por cualquier medio (incluyendo redes sociales o WhatsApp) el contenido de bitácoras, controles de acceso, sistemas de monitoreo o pantallas de CCTV. 
+Uso y Portación del Uniforme: Mantener una imagen personal aseada y profesional, portando correctamente el uniforme completo, limpio, fajado y con el gafete de identificación visible durante toda su jornada laboral, como medida de confianza hacia los clientes. 
+Inspección y Conservación de Equipo: Revisar, inspeccionar y conservar en buen estado las herramientas, útiles, uniformes y el equipo táctico o de comunicación (radios, fornituras, linternas) proporcionados por el PATRÓN; reportando inmediatamente cualquier desperfecto y absteniéndose de utilizarlos para fines personales. 
+Reporte de Incidencias: Informar de manera inmediata a su supervisor de zona o a la central de operaciones sobre cualquier incidente de seguridad, anomalía, siniestro o situación de riesgo detectada en las instalaciones. 
+Conducta Profesional: Mantener en todo momento un trato respetuoso, digno y profesional con los clientes, visitantes, proveedores y compañeros de trabajo. 
+Exámenes de Control y Confianza: Someterse a los exámenes médicos, psicométricos, de alcoholemia y toxicológicos aleatorios o periódicos que determine la Empresa o las autoridades competentes para prevenir riesgos de trabajo; aceptando que la negativa a realizárselos será causa de rescisión inmediata de la relación de trabajo. 
+Medidas Preventivas de Seguridad e Higiene: Observar y acatar rigurosamente todas las medidas preventivas, higiénicas y de seguridad que acuerden las autoridades y las que indique el PATRÓN para salvaguardar su integridad física, la de sus compañeros y la de los bienes resguardados. 
 
-DECIMA TERCERA. El trabajador deberá elaborar y entregar oportunamente los reportes, bitácoras, formatos de novedades y demás documentos operativos requeridos por la empresa. La falsificación de información o la omisión deliberada de hechos relevantes constituirá falta grave.
+	DECIMA TERCERA. El trabajador deberá elaborar y entregar oportunamente los reportes, bitácoras, formatos de novedades y demás documentos operativos requeridos por la empresa. La falsificación de información o la omisión deliberada de hechos relevantes constituirá falta grave.
 
-DECIMA CUARTA. El TRABAJADOR se obliga a obedecer estrictamente las normas de trabajo fijadas por el PATRÓN y a respetar la organización jerárquica establecida, así como a cumplir con todas las obligaciones que naturalmente deriven de este contrato.
+	DECIMA CUARTA. El TRABAJADOR se obliga a obedecer estrictamente las normas de trabajo fijadas por el PATRÓN y a respetar la organización jerárquica que la misma tiene establecidas o en el futuro establezca, así como a cumplir con todas las obligaciones que naturalmente deriven de este contrato y de los servicios que debe prestar. 
 
-DECIMA QUINTA. El TRABAJADOR reconoce que son propiedad exclusiva del PATRÓN y/o sus clientes todos los documentos e información que se le proporcionen con motivo de la relación de trabajo, obligándose a conservarlos en buen estado y a entregarlos cuando se le requiera o al terminar el presente contrato.
+	DECIMA QUINTA. El TRABAJADOR reconoce que son propiedad exclusiva del PATRÓN y/o sus clientes todos los documentos e información que se le proporcionen con motivo de la relación de trabajo, así como los que el propio PATRÓN prepare o formule en relación o conexión con sus servicios, por lo que se obliga a conservarlos en buen estado y a entregarlos al PATRÓN en el momento en que éste lo requiera o bien al terminar el presente contrato, por el motivo que sea.
 
-DECIMA SEXTA. El TRABAJADOR se obliga a devolver, a satisfacción del PATRÓN, los instrumentos, equipos y materiales que le fueren proporcionados para el desempeño de sus funciones. Si el TRABAJADOR dejare de cumplir con lo establecido en esta Cláusula, quedará sujeto a la responsabilidad civil por los daños o perjuicios causados, así como a las sanciones de carácter penal procedentes.
+	DECIMA SEXTA. El TRABAJADOR se obliga a devolver, a satisfacción del PATRÓN, los instrumentos, equipos y materiales que le fueren proporcionados para el desempeño de sus funciones en el momento en que éste lo requiera o al término del presente acuerdo de voluntades por el motivo que fuere.
+Si el EMPLEADO dejare de cumplir con lo establecido en la presente Clausula, quedará sujeto a la responsabilidad civil por los daños o perjuicios que causare al PATRÓN como dueño y propietario de estas herramientas de trabajo, así como las sanciones de carácter penal a que por ello se hiciere acreedor.     
 
-DECIMA SEPTIMA. CONFIDENCIALIDAD. El TRABAJADOR, en cumplimiento a la fracción XIII del artículo 134 de la Ley Federal del Trabajo, se obliga a no divulgar ninguno de los aspectos de los negocios del PATRÓN, información de clientes, vulnerabilidades, manuales o datos personales. La revelación de esta información a terceros será causa de rescisión de la relación laboral, quedando sujeto a responsabilidad civil y penal.
+	DECIMA SEPTIMA. CONFIDENCIALIDAD. 
+El TRABAJADOR, en cumplimiento a la fracción XIII del artículo 134 de la Ley Federal del Trabajo, se obliga a no divulgar ninguno de los aspectos de los negocios del PATRÓN, información de clientes, vulnerabilidades de clientes, manuales y datos personales a los que tenga acceso con motivo de su trabajo.ni datos personales a terceras personas, verbalmente o por escrito, directa o indirectamente, información alguna sobre los sistemas o actividades de cualquier clase que observe el PATRÓN. La revelación de esta información a terceros será causa de rescisión de la relación laboral.
+Si el TRABAJADOR dejare de cumplir con las disposiciones de esta Cláusula, quedará sujeto a la responsabilidad civil por daños y perjuicios que cause al PATRÓN y a las sanciones penales que marca la ley a que se haga acreedor.
 
-DECIMA OCTAVA. El TRABAJADOR se obliga a cumplir con las disposiciones legales en materia de protección de datos personales y a resguardar adecuadamente cualquier información a la que tenga acceso.
+	DECIMA OCTAVA. El TRABAJADOR se obliga a cumplir con las disposiciones legales en materia de protección de datos personales y a resguardar adecuadamente cualquier información a la que tenga acceso durante la prestación de sus servicios.
 
-DECIMA NOVENA. Conforme a lo dispuesto por la Fracción X del Artículo 134 de la Ley Federal del Trabajo, el TRABAJADOR se someterá a los exámenes médicos que ordene el PATRÓN por conducto del facultativo designado.
+	DECIMA NOVENA. Conforme a lo dispuesto por la Fracción X del Artículo 134 de la Ley Federal del Trabajo, el TRABAJADOR se someterá a los exámenes médicos que ordene el PATRÓN, en la inteligencia de que el facultativo que los practique será designado y retribuido por éste mismo. 
 
-VIGESIMA. Para todo lo relacionado con riesgos de trabajo y enfermedades o accidentes no profesionales, se estará a lo dispuesto por la Ley del Seguro Social y sus Reglamentos, inscribiendo oportunamente al TRABAJADOR ante el IMSS. El único documento válido para justificar faltas de asistencia por incapacidad será el expedido por el Instituto Mexicano del Seguro Social.
+	VIGESIMA. Para todo lo relacionado con riesgos de trabajo y enfermedades o accidentes no profesionales, se estará a lo dispuesto por la Ley del Seguro Social y sus Reglamentos, para lo cual el PATRÓN inscribirá oportunamente al TRABAJADOR ante el Instituto Mexicano del Seguro Social, cubriéndose las cuotas por ambas partes, en los términos que consigna la citada Ley.
+En tal virtud, el único documento válido para justificar faltas de asistencia derivadas de incapacidad por enfermedad general o profesional será el certificado y/o incapacidad que expida el Instituto Mexicano del Seguro Social.
 
-VIGESIMA PRIMERA. El PATRÓN proporcionará capacitación y adiestramiento al TRABAJADOR conforme a los planes y programas establecidos por la Ley Federal del Trabajo.
+	VIGESIMA PRIMERA. El PATRÓN proporcionará capacitación y adiestramiento al TRABAJADOR, conforme a los planes y programas establecidos, o que se establezcan de acuerdo con las disposiciones de la Ley Federal del Trabajo, comprometiéndose el TRABAJADOR a dedicar el tiempo y esfuerzo necesarios para lograr la mejor eficiencia en dicha capacitación.
 
-VIGESIMA SEGUNDA. Las partes convienen que, en lo no previsto por el presente contrato, se sujetarán a las disposiciones de la Ley Federal del Trabajo y de la Ley del Seguro Social y sus Reglamentos.
+	VIGESIMA SEGUNDA. Las partes convienen que, en lo no previsto por el presente contrato, se sujetarán a las disposiciones de la Ley Federal del Trabajo y de la Ley del Seguro Social y sus Reglamentos
 
-VIGESIMA TERCERA. CAUSAS DE RESCISIÓN: Serán causas de rescisión sin responsabilidad para el Patrón las previstas en el artículo 47 de la Ley Federal del Trabajo y demás disposiciones aplicables.
+	VIGESIMA TERCERA. CAUSAS DE RESCISIÓN:
+Serán causas de rescisión sin responsabilidad para el Patrón las previstas en el artículo 47 de la Ley Federal del Trabajo y demás disposiciones aplicables.
 
-VIGESIMA CUARTA. Salvo autorización expresa del supervisor o cliente, queda restringido el uso de teléfonos celulares, audífonos, tabletas u otros dispositivos electrónicos durante la prestación del servicio cuando ello afecte la vigilancia o seguridad.
+	VIGESIMA CUARTA. Salvo autorización expresa del supervisor o cliente, queda restringido el uso de teléfonos celulares, audífonos, tabletas u otros dispositivos electrónicos durante la prestación del servicio cuando ello afecte la vigilancia o seguridad del puesto asignado.
 
-VIGESIMA QUINTA. REGLAMENTO INTERIOR DE TRABAJO. El Trabajador manifiesta conocer y aceptar el Reglamento Interior de Trabajo de la empresa, obligándose a cumplirlo en todos sus términos.
+	VIGESIMA QUINTA. REGLAMENTO INTERIOR DE TRABAJO.
+El Trabajador manifiesta conocer y aceptar el Reglamento Interior de Trabajo de la empresa, obligándose a cumplirlo en todos sus términos y demás disposiciones internas de la empresa.
 
-VIGESIMA SEXTA. LEGISLACIÓN APLICABLE. Para todo lo no previsto en este contrato serán aplicables la Ley Federal del Trabajo, la legislación vigente, la normativa de seguridad social y las disposiciones aplicables a la seguridad privada en el Estado de Nuevo León.
+	VIGESIMA SEXTA. LEGISLACIÓN APLICABLE.
+Para todo lo no previsto en este contrato serán aplicables la Ley Federal del Trabajo, la legislación laboral vigente, la normativa de seguridad social y las disposiciones aplicables a la prestación de servicios de seguridad privada en el Estado de Nuevo León.
 
-VIGÉSIMA SEPTIMA. Cualquier modificación que se haga al presente contrato deberá constar por escrito y ser firmada de conformidad por ambas partes.
+	VIGÉSIMA SEPTIMA. Cualquier modificación que se haga al presente contrato deberá constar por escrito y deberá ser firmada de conformidad por ambas partes.
 
-Leído que lo fue íntegramente el presente contrato y enteradas las partes de su contenido y alcance legal, el TRABAJADOR y el PATRÓN lo ratificaron y firmaron de conformidad, por duplicado, ante dos testigos, en la calle Santa Bárbara número 141, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juárez, Nuevo León, el día de su celebración.
+Leído que lo fue íntegramente el presente contrato y enteradas las partes de su contenido y alcancel legal, el TRABAJADOR y el PATRÓN lo ratificaron y firmaron de conformidad, por duplicado, ante dos testigos, en la calle Santa Barbara número 141, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juarez, Nuevo León, el _____ de _________________ de 202__, quedando un original en poder del PATRÓN y otro en poder del TRABAJADOR.
 
-
-__________________________________
-EL PATRÓN
+EL PATRON
 AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE S.A. DE C.V.
 C. ABNER VELAZQUEZ MORALES
-Representante Legal
-
-
-__________________________________
-EL TRABAJADOR
+Representante legal
+ | EL TRABAJADOR
 {datos['Nombre']}
 Por sus propios derechos
 
+TESTIGO
+(Nombre)
+(Dirección)
+ | TESTIGO
+(Nombre)
+(Dirección)
+"""
+            else:
+                # Redacción exacta para Contrato por Tiempo Indeterminado (Sin periodo de prueba)
+                texto_contrato = f"""CONTRATO INDIVIDUAL DE TRABAJO POR TIEMPO INDETERMINADO, QUE CELEBRAN, POR UNA PARTE, AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE, SOCIEDAD ANONIMA DE CAPITAL VARIABLE, REPRESENTADA EN ESTE ACTO POR EL C. ABNER VELAZQUEZ MORALES (EN LO SUCESIVO, EL "PATRÓN"), Y POR LA OTRA PARTE, POR SU PROPIO DERECHO, {datos['Nombre']} (EN LO SUCESIVO, EL “TRABAJADOR”), DE CONFORMIDAD CON LOS ARTÍCULOS 20, 21, 24, 25, 35, 39-A, 39-B, 132, 134 Y DEMÁS RELATIVOS Y APLICABLES DE LA LEY FEDERAL DEL TRABAJO, AL TENOR DE LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:
 
-__________________________________
-TESTIGO 1
+D E C L A R A C I O N E S:
 
+I. Declara el PATRÓN:
+	a) Ser una persona moral, debidamente constituida conforme a las leyes de la República Mexicana, según consta en la escritura pública número 6,948, pasada ante la fe del Notario Público número 127, con domicilio ubicado en Calle Santa Bárbara número 141, C. Asturias, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juárez, Nuevo León, Registro Federal de Contribuyentes AGI260413CK4 y tener como objeto social, entre otros, la prestación de servicios de seguridad privada, consistentes en la vigilancia, protección y resguardo de bienes muebles e inmuebles, así como de establecimientos comerciales, industriales, habitacionales y de servicios, mediante la utilización de recursos humanos debidamente capacitados. La prestación de servicios de seguridad intramuros, incluyendo el control de accesos y salidas, registro de personas y vehículos, realización de rondines y supervisión interna de instalaciones privadas, con la finalidad de prevenir actos delictivos, riesgos o siniestros. La administración y control de acceso por medio de personal, así como la implementación de protocolos de seguridad, supervisión operativa y control de ingreso y egreso en todo tipo de instalaciones.
+	b) Que, para dar cumplimiento al objeto social o profesión consignado en la declaración anterior, requiere de personal capacitado y con experiencia para ocupar el puesto de {datos['Puesto']} para que realice las actividades consistentes, de manera enunciativa mas no limitativa, en:
+	Vigilancia, protección y resguardo de bienes muebles e inmuebles, así como en establecimientos comerciales, industriales, habitaciones. Seguridad intramuros incluyendo el control de accesos y salidas, registro de personas y vehículos, realización de rondines y supervisión interna de instalaciones privadas, operación y monitoreo de sistemas de seguridad electrónica, sistemas de alarma, circuito cerrado de televisión, sistemas de control de accesos, sistemas de rastreo satelital y demás tecnologías relacionadas con la seguridad.
 
-__________________________________
-TESTIGO 2
+II. Declara el TRABAJADOR:
+	a) Ser una persona física, de nacionalidad {datos['Nacionalidad']}, de sexo {datos['Sexo']}, con fecha de nacimiento el {datos.get('Fecha de Nacimiento', '[No especificada]')}, estado civil {datos.get('Estado Civil', '[No especificado]')}, Clave Única de Registro de Población {datos['CURP']} y Registro Federal de Contribuyentes {datos['RFC']}, con domicilio en {datos['Domicilio']}.
+	b) Que cuenta con los conocimientos, habilidades y experiencia necesarios para prestar al PATRÓN los servicios mencionados en el inciso b) de la Declaración I.
+	c) Que está de acuerdo en prestar los servicios descritos en el presente contrato.
+
+III. Declaran ambas partes:
+	a) Que cuentan con las facultades suficientes para la celebración del presente contrato y obligarse a los términos del mismo, reconociéndose mutuamente la personalidad con la que comparecen.
+
+En consideración a las Declaraciones que anteceden, las partes otorgan las siguientes:
+
+C L Á U S U L A S:
+
+	PRIMERA. El TRABAJADOR se obliga a prestar, bajo la dirección, dependencia y subordinación del PATRÓN, los servicios personales descritos en el inciso b) de la Declaración I, con el puesto de {datos['Puesto']}. Las partes están de acuerdo en que los servicios mencionados anteriormente se estipulan de manera enunciativa y no limitativa, por lo que el TRABAJADOR se obliga a desempeñar todas las labores anexas y conexas que le ordene el PATRÓN.
+
+	SEGUNDA. Se hace constar que el PATRÓN celebra el presente contrato fundado en las declaraciones del TRABAJADOR en el sentido de que cuenta con los requisitos y conocimientos necesarios para desempeñar adecuadamente las actividades inherentes al cargo para el que se le contrata. Al término del periodo de prueba, de no acreditar el TRABAJADOR que satisface los requisitos y conocimientos necesarios para desarrollar las labores, a juicio del patrón, tomando en cuenta la opinión de la Comisión Mixta de Productividad, Capacitación y Adiestramiento en los términos de la Ley Federal del Trabajo, así́ como la naturaleza de la categoría o puesto, se dará́ por terminada la relación de trabajo, sin responsabilidad para el PATRÓN.
+
+	TERCERA. El TRABAJADOR prestará sus servicios en el domicilio del PATRÓN o en cualquier otro domicilio en el que se ubiquen las oficinas o locales del mismo. El TRABAJADOR, manifiesta desde este momento su conformidad con cualquier eventual cambio en el lugar de la prestación de sus servicios. El Trabajador acepta que, debido a la naturaleza de los servicios de seguridad privada, podrá ser asignado temporal o permanentemente a distintos centros de trabajo, clientes, instalaciones o ubicaciones donde el Patrón tenga contratos de prestación de servicios. Dichos cambios no constituirán modificación unilateral de las condiciones de trabajo siempre que se respeten los derechos laborales del trabajador.
+
+	CUARTA. El Trabajador se obliga a cumplir estrictamente las consignas generales y particulares establecidas para cada servicio, incluyendo procedimientos de acceso, control de visitantes, vigilancia perimetral, rondines y reportes.  De conformidad con el Reglamento Interior de Trabajo de la Empresa, las funciones del TRABAJADOR están limitadas estrictamente a la prevención, vigilancia y control de accesos. En caso de emergencias (tales como siniestros, robos en proceso o accidentes), la intervención del TRABAJADOR se limitará de manera enunciativa más no limitativa a: activar los protocolos de seguridad pasiva, dar aviso inmediato a los cuerpos de auxilio públicos (policía, bomberos, ambulancias), reportar a la central de operaciones de El PATRÓN y auxiliar en la evacuación segura del personal. Queda estrictamente prohibido realizar acciones de confrontación o tácticas que pongan en riesgo su integridad física o la de terceros. La omisión injustificada en el cumplimiento de estas consignas será sancionada conforme a la Ley Federal del Trabajo y al Reglamento Interior de Trabajo.
+
+	QUINTA. El PATRÓN pagará al TRABAJADOR, por los servicios prestados de conformidad con este contrato, un salario ordinario de {datos['Salario Semanal']} pesos semanales, el cual se cubrirá los viernes de cada semana. En este importe ya se encuentra incluido el pago correspondiente a los séptimos días (días de descanso semanal) y los días festivos de descanso obligatorio en términos de los artículos 69 y 74 de la Ley Federal del Trabajo. 
+De los Bonos de Asistencia y Puntualidad: Adicionalmente al salario ordinario, el PATRÓN otorgará al TRABAJADOR un Bono de Asistencia Semanal por la cantidad de $450.00 pesos (cuatrocientos cincuenta pesos 00/100 M.N.) y un Bono de Puntualidad Semanal por la cantidad de $450.00 pesos (cuatrocientos cincuenta pesos 00/100 M.N.).
+El TRABAJADOR queda estrictamente obligado al cumplimiento del 100% de sus asistencias y de sus horarios de entrada durante la semana correspondiente para devengar dichos conceptos. Las partes acuerdan que el nacimiento del derecho a recibir estos bonos está condicionado estrictamente al cumplimiento perfecto de la asistencia y puntualidad; por lo tanto, en caso de que el TRABAJADOR incurra en una sola falta de asistencia (justificada o injustificada) o en un solo retardo durante el periodo semanal, no se generará ni se pagará el bono correspondiente a la falta incurrida (ya sea de asistencia, de puntualidad, o ambos), sin responsabilidad alguna para el PATRÓN.
+En caso de que el día de pago sea de descanso obligatorio o festivo bancario, el depósito se efectuará el día hábil inmediato anterior. El pago del salario y de las prestaciones que correspondan se realizará exclusivamente mediante transferencia electrónica de fondos a la cuenta bancaria institucional que EL PATRÓN apertura a nombre del TRABAJADOR, o a la cuenta que este designe por escrito. Los costos de apertura y manejo de cuenta correrán por cuenta de la Empresa. Al importe del salario y bonos se le realizarán las deducciones legales de impuestos y Seguridad Social correspondientes. 
+	Por su parte, el TRABAJADOR se obliga, en cualquier caso, a firmar el recibo correspondiente por los pagos efectuados. Si, por alguna razón, éste no firmara el recibo, las partes aceptan que el simple depósito bancario produce efecto liberatorio de pago para el PATRÓN.  
+
+	SEXTA. La duración máxima de la semana laboral será de 45 (cuarenta y cinco) horas, distribuidas de lunes a sábado de cada semana, de conformidad con lo dispuesto por el segundo párrafo del artículo 59 de la Ley Federal del Trabajo. 
+Debido a la naturaleza especializada de las actividades de seguridad y vigilancia que presta la Empresa, y para garantizar la continuidad y la cobertura ininterrumpida de los servicios contratados por nuestros clientes, las partes acuerdan expresamente que las jornadas y horarios de trabajo no serán fijos ni permanentes. El TRABAJADOR prestará sus servicios bajo esquemas de turnos rotativos (tales como 8x16 horas, 12x12 horas, 24x24 horas, o los esquemas que operativamente se requieran) , según el rol que le sea comunicado oportunamente por su superior inmediato o supervisor de zona. 
+Dentro de la jornada continua, el TRABAJADOR dispondrá de un lapso de 30 (treinta) minutos intermedios para tomar alimentos y reposar, el cual será considerado como tiempo efectivo de trabajo y se adaptará de forma flexible a las necesidades de cada servicio ; durante este periodo, el trabajador podrá utilizar las sillas o asientos destinados para tal efecto de acuerdo con el artículo 132 fracción V de la Ley Federal del Trabajo. El PATRÓN podrá modificar en cualquier tiempo el horario, rol y la rotación de turnos conforme a las necesidades operativas de la Empresa. 
+El TRABAJADOR no laborará tiempo extra en su jornada normal, ni durante días de descanso, salvo previa orden expresa y por escrito emitida por el representante del PATRÓN ; orden sin la cual no se reconocerá ni se pagará tiempo extraordinario alguno. 
+
+	SEPTIMA. Las partes convienen en que los días de descanso semanal serán el domingo, sin perjuicio de que el PATRÓN modifique dichos días de descanso semanal cuando las necesidades del servicio así lo requieran. 
+
+	OCTAVA. Cuando el TRABAJADOR tenga más de un año de servicios, disfrutará de doce días de vacaciones anuales en los términos y condiciones que establece la Ley Federal del Trabajo. Adicionalmente, el PATRÓN pagará al TRABAJADOR una prima vacacional del 25% sobre el salario que le corresponda por sus días de vacaciones, en términos de lo dispuesto por el Artículo 80 de la Ley Federal del Trabajo.
+
+	NOVENA. Serán días de descanso obligatorio los que señala el Artículo 74 de la Ley Federal del Trabajo. Atendiendo a la naturaleza especializada de los servicios de seguridad y vigilancia de la Empresa, la cobertura de estos días estará sujeta a los roles operativos cambiantes y requerimientos de los clientes asignados por el supervisor de zona, obligándose el TRABAJADOR a prestar sus servicios si la operación lo requiere, previo pago de las compensaciones legales aplicables.
+
+	DECIMA. El PATRÓN pagará al TRABAJADOR un aguinaldo anual, equivalente a 15 días de salario, en los términos que establece el Artículo 87 de la Ley Federal del Trabajo, mismo que deberá cubrirse a más tardar el 20 de diciembre de cada año.
+
+	DECIMA PRIMERA. EQUIPO Y UNIFORMES. El Patrón proporcionará los uniformes, gafetes, equipo de protección y herramientas necesarias para el desempeño de sus funciones. Los radios, teléfonos, cámaras corporales, dispositivos electrónicos y demás equipos proporcionados por la empresa deberán utilizarse exclusivamente para fines laborales.
+Queda prohibido alterar, modificar, cambiar, dañar, prestar o utilizar dichos equipos para fines personales. El Trabajador se obliga a utilizarlos adecuadamente y devolverlos al concluir la relación laboral.
+
+	DECIMA SEGUNDA. OBLIGACIONES DEL TRABAJADOR. Además de las obligaciones previstas en el artículo 134 de la Ley Federal del Trabajo, el TRABAJADOR se obliga estrictamente a cumplir con lo establecido en el Reglamento Interior de Trabajo de la Empresa, comprometiéndose de manera enunciativa más no limitativa a: 
+Cumplimiento de Instrucciones y Consignas: Acatar con eficacia, cuidado y esmero las instrucciones de trabajo, órdenes patronales y las consignas específicas o particulares establecidas para el puesto o servicio asignado. 
+Puntualidad y Asistencia: Presentarse puntualmente a sus labores respetando los horarios y roles de turnos asignados, registrando personalmente su entrada y salida en los controles (tarjeta, bitácora o lector) que determine el PATRÓN. 
+Permanencia y Protocolo de Relevo: Permanecer de forma estrictamente personal en su puesto de vigilancia y control de accesos hasta que se presente físicamente su relevo y se realice la entrega formal de la bitácora y equipo; reconociendo que el abandono del puesto sin autorización expresa del supervisor constituirá una falta grave. 
+Estricta Confidencialidad y Reserva: Guardar absoluta reserva y discreción sobre los asuntos de la Empresa y sus clientes. Queda estrictamente prohibido fotografiar, videograbar, reproducir, extraer o difundir por cualquier medio (incluyendo redes sociales o WhatsApp) el contenido de bitácoras, controles de acceso, sistemas de monitoreo o pantallas de CCTV. 
+Uso y Portación del Uniforme: Mantener una imagen personal aseada y profesional, portando correctamente el uniforme completo, limpio, fajado y con el gafete de identificación visible durante toda su jornada laboral, como medida de confianza hacia los clientes. 
+Inspección y Conservación de Equipo: Revisar, inspeccionar y conservar en buen estado las herramientas, útiles, uniformes y el equipo táctico o de comunicación (radios, fornituras, linternas) proporcionados por el PATRÓN; reportando inmediatamente cualquier desperfecto y absteniéndose de utilizarlos para fines personales. 
+Reporte de Incidencias: Informar de manera inmediata a su supervisor de zona o a la central de operaciones sobre cualquier incidente de seguridad, anomalía, siniestro o situación de riesgo detectada en las instalaciones. 
+Conducta Profesional: Mantener en todo momento un trato respetuoso, digno y profesional con los clientes, visitantes, proveedores y compañeros de trabajo. 
+Exámenes de Control y Confianza: Someterse a los exámenes médicos, psicométricos, de alcoholemia y toxicológicos aleatorios o periódicos que determine la Empresa o las autoridades competentes para prevenir riesgos de trabajo; aceptando que la negativa a realizárselos será causa de rescisión inmediata de la relación de trabajo. 
+Medidas Preventivas de Seguridad e Higiene: Observar y acatar rigurosamente todas las medidas preventivas, higiénicas y de seguridad que acuerden las autoridades y las que indique el PATRÓN para salvaguardar su integridad física, la de sus compañeros y la de los bienes resguardados. 
+
+	DECIMA TERCERA. El trabajador deberá elaborar y entregar oportunamente los reportes, bitácoras, formatos de novedades y demás documentos operativos requeridos por la empresa. La falsificación de información o la omisión deliberada de hechos relevantes constituirá falta grave.
+
+	DECIMA CUARTA. El TRABAJADOR se obliga a obedecer estrictamente las normas de trabajo fijadas por el PATRÓN y a respetar la organización jerárquica que la misma tiene establecidas o en el futuro establezca, así como a cumplir con todas las obligaciones que naturalmente deriven de este contrato y de los servicios que debe prestar. 
+
+	DECIMA QUINTA. El TRABAJADOR reconoce que son propiedad exclusiva del PATRÓN y/o sus clientes todos los documentos e información que se le proporcionen con motivo de la relación de trabajo, así como los que el propio PATRÓN prepare o formule en relación o conexión con sus servicios, por lo que se obliga a conservarlos en buen estado y a entregarlos al PATRÓN en el momento en que éste lo requiera o bien al terminar el presente contrato, por el motivo que sea.
+
+	DECIMA SEXTA. El TRABAJADOR se obliga a devolver, a satisfacción del PATRÓN, los instrumentos, equipos y materiales que le fueren proporcionados para el desempeño de sus funciones en el momento en que éste lo requiera o al término del presente acuerdo de voluntades por el motivo que fuere.
+Si el EMPLEADO dejare de cumplir con lo establecido en la presente Clausula, quedará sujeto a la responsabilidad civil por los daños o perjuicios que causare al PATRÓN como dueño y propietario de estas herramientas de trabajo, así como las sanciones de carácter penal a que por ello se hiciere acreedor.     
+
+	DECIMA SEPTIMA. CONFIDENCIALIDAD. 
+El TRABAJADOR, en cumplimiento a la fracción XIII del artículo 134 de la Ley Federal del Trabajo, se obliga a no divulgar ninguno de los aspectos de los negocios del PATRÓN, información de clientes, vulnerabilidades de clientes, manuales y datos personales a los que tenga acceso con motivo de su trabajo.ni datos personales a terceras personas, verbalmente o por escrito, directa o indirectamente, información alguna sobre los sistemas o actividades de cualquier clase que observe el PATRÓN. La revelación de esta información a terceros será causa de rescisión de la relación laboral.
+Si el TRABAJADOR dejare de cumplir con las disposiciones de esta Cláusula, quedará sujeto a la responsabilidad civil por daños y perjuicios que cause al PATRÓN y a las sanciones penales que marca la ley a que se haga acreedor.
+
+	DECIMA OCTAVA. El TRABAJADOR se obliga a cumplir con las disposiciones legales en materia de protección de datos personales y a resguardar adecuadamente cualquier información a la que tenga acceso durante la prestación de sus servicios.
+
+	DECIMA NOVENA. Conforme a lo dispuesto por la Fracción X del Artículo 134 de la Ley Federal del Trabajo, el TRABAJADOR se someterá a los exámenes médicos que ordene el PATRÓN, en la inteligencia de que el facultativo que los practique será designado y retribuido por éste mismo. 
+
+	VIGESIMA. Para todo lo relacionado con riesgos de trabajo y enfermedades o accidentes no profesionales, se estará a lo dispuesto por la Ley del Seguro Social y sus Reglamentos, para lo cual el PATRÓN inscribirá oportunamente al TRABAJADOR ante el Instituto Mexicano del Seguro Social, cubriéndose las cuotas por ambas partes, en los términos que consigna la citada Ley.
+En tal virtud, el único documento válido para justificar faltas de asistencia derivadas de incapacidad por enfermedad general o profesional, será el certificado y/o incapacidad que expida el Instituto Mexicano del Seguro Social.
+
+	VIGESIMA PRIMERA. El PATRÓN proporcionará capacitación y adiestramiento al TRABAJADOR, conforme a los planes y programas establecidos, o que se establezcan de acuerdo con las disposiciones de la Ley Federal del Trabajo, comprometiéndose el TRABAJADOR a dedicar el tiempo y esfuerzo necesarios para lograr la mejor eficiencia en dicha capacitación.
+
+	VIGESIMA SEGUNDA. Las partes convienen que, en lo no previsto por el presente contrato, se sujetarán a las disposiciones de la Ley Federal del Trabajo y de la Ley del Seguro Social y sus Reglamentos
+
+	VIGESIMA TERCERA. CAUSAS DE RESCISIÓN:
+Serán causas de rescisión sin responsabilidad para el Patrón las previstas en el artículo 47 de la Ley Federal del Trabajo y demás disposiciones aplicables.
+
+	VIGESIMA CUARTA. Salvo autorización expresa del supervisor o cliente, queda restringido el uso de teléfonos celulares, audífonos, tabletas u otros dispositivos electrónicos durante la prestación del servicio cuando ello afecte la vigilancia o seguridad del puesto asignado.
+
+	VIGESIMA QUINTA. REGLAMENTO INTERIOR DE TRABAJO.
+El Trabajador manifiesta conocer y aceptar el Reglamento Interior de Trabajo de la empresa, obligándose a cumplirlo en todos sus términos y demás disposiciones internas de la empresa.
+
+	VIGESIMA SEXTA. LEGISLACIÓN APLICABLE.
+Para todo lo no previsto en este contrato serán aplicables la Ley Federal del Trabajo, la legislación laboral vigente, la normativa de seguridad social y las disposiciones aplicables a la prestación de servicios de seguridad privada en el Estado de Nuevo León.
+
+	VIGÉSIMA SEPTIMA. Cualquier modificación que se haga al presente contrato deberá constar por escrito y deberá ser firmada de conformidad por ambas partes.
+
+Leído que lo fue íntegramente el presente contrato y enteradas las partes de su contenido y alcancel legal, el TRABAJADOR y el PATRÓN lo ratificaron y firmaron de conformidad, por duplicado, ante dos testigos, en la calle Santa Barbara número 141, Colonia Valle de Santa Isabel, C.P. 67256, Ciudad Benito Juarez, Nuevo León, el _____ de _________________ de 202__, quedando un original en poder del PATRÓN y otro en poder del TRABAJADOR.
+
+EL PATRON
+AVM GRUPO INTEGRAL DE SEGURIDAD PRIVADA DEL NORTE S.A. DE C.V.
+C. ABNER VELAZQUEZ MORALES
+Representante legal
+ | EL TRABAJADOR
+{datos['Nombre']}
+Por sus propios derechos
+
+TESTIGO
+(Nombre)
+(Dirección)
+ | TESTIGO
+(Nombre)
+(Dirección)
 """
 
             for parrafo in texto_contrato.split("\n\n"):
@@ -864,13 +987,13 @@ TESTIGO 2
             registrar_auditoria(
                 st.session_state.usuario_actual,
                 "CONTRATO",
-                f"Generó contrato completo con periodo de prueba para {datos['Nombre']}",
+                f"Generó contrato tipo '{tipo_c}' para {datos['Nombre']}",
             )
-            st.success("¡Contrato laboral completo generado con éxito!")
+            st.success(f"¡Contrato de {tipo_c} generado con éxito!")
             st.download_button(
-                "📥 Descargar Documento Word Completo",
+                "📥 Descargar Documento Word",
                 buffer,
-                file_name=f"Contrato_Prueba_{datos['Nombre'].replace(' ', '_')}.docx",
+                file_name=f"Contrato_{tipo_c.split()[0]}_{datos['Nombre'].replace(' ', '_')}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
 
