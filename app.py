@@ -18,6 +18,16 @@ st.set_page_config(
     layout="wide",
 )
 
+# --- FUNCIONES DE PERSISTENCIA Y CARGA DE DATOS ---
+def cargar_datos(nombre_archivo):
+    if os.path.exists(nombre_archivo):
+        return pd.read_csv(nombre_archivo)
+    else:
+        return pd.DataFrame()
+
+def guardar_datos(df, nombre_archivo):
+    df.to_csv(nombre_archivo, index=False)
+
 # Estilos corporativos en Negro y Dorado
 st.markdown(
     """
