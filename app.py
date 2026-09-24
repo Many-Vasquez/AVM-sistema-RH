@@ -3,6 +3,7 @@ from io import BytesIO
 import os
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -546,6 +547,100 @@ elif menu == "📊 Módulo Comercial (Cotizador)":
             file_name=f"Cotizacion_{st.session_state.empresa_cliente.replace(' ', '_')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
+
+# ==========================================
+# FUNCIÓN DE REGISTRO BIOMÉTRICO (WEBAUTHN)
+# ==========================================
+def registrar_huella_webauthn(empleado_nss):
+    st.subheader("🔐 Registro de Credencial Biométrica (Celular Matriz)")
+    st.markdown("Coloque el dedo en el sensor del teléfono para registrar la huella del elemento maestro.")
+
+    biometric_html = f"""
+    <div>
+        <button id="bioBtn" style="background-color:#d4af37; color:black; padding:10px 20px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">
+            Escanear Huella en Dispositivo
+        </button>
+        <p id="status" style="margin-top:10px; color:white;"></p>
+    </div>
+    
+    <script>
+    document.getElementById('bioBtn').onclick = async () => {{
+        const statusEl = document.getElementById('status');
+        try {{
+            if (!window.PublicKeyCredential) {{
+                statusEl.innerText = "Error: Este navegador o dispositivo no soporta biometría.";
+                return;
+            }}
+            
+            statusEl.innerText = "Escaneando huella... Por favor, use el sensor.";
+            
+            const publicKey = {{
+                challenge: new Uint8Array([21, 31, 105, 43, 34, 45, 67, 89]),
+                rp: {{ name: "AVM Grupo Integral de Seguridad Privada del Norte" }},
+                user: {{
+                    id: Uint8Array.from("{empleado_nss}", c => c.charCodeAt(0)),
+                    name: "{empleado_nss}",
+                    displayName: "Elemento AVM"
+                }},
+                pubKeyCredParams: [{{ alg: -7, type: "public-key" }}],
+                timeout: 60000,
+                attestation: "direct"
+            }};
+
+            const credential = await navigator.credentials.create({{ publicKey }});
+            statusEl.innerText = "¡Huella registrada y validada con éxito!";
+            console.log("Credencial creada:", credential.id);
+            
+        }} catch (error) {{
+            statusEl.innerText = "Error o registro cancelado: " + error.message;
+        }}
+    }};
+    </script>
+    """
+    components.html(biometric_html, height=150)
+
+# ==========================================
+# EJEMPLO DE INTEGRACIÓN EN EL MENÚ Y CONTROL DE ACCESO
+# ==========================================
+def gestionar_navegacion():
+    # Verificamos si el usuario ha iniciado sesión y su rol es Administrador
+    # (Asegúrate de adaptar 'st.session_state.get("role")' a la variable que uses para guardar el rol en tu login)
+    rol_actual = st.session_state.get("role", "invitado")
+    
+    st.sidebar.title("Menú AVM Seguridad")
+    
+    # Opciones base para cualquier usuario autenticado
+    opciones_menu = ["Asistencia", "Control Operativo"]
+    
+    # Si es Administrador, agregamos la opción exclusiva de Biometría
+    if rol_actual == "Administrador":
+        opciones_menu.append("Registro Biométrico Maestro")
+        
+    seleccion = st.sidebar.selectbox("Seleccione una opción", opciones_menu)
+    
+    # Lógica de las vistas
+    if seleccion == "Asistencia":
+        st.header("Control de Asistencia")
+        st.write("Módulo de entradas y salidas de elementos.")
+        
+    elif seleccion == "Control Operativo":
+        st.header("Panel Operativo")
+        st.write("Gestión general de servicios y elementos.")
+        
+    elif seleccion == "Registro Biométrico Maestro" and rol_actual == "Administrador":
+        st.header("Administración de Biometría Matriz")
+        st.markdown("---")
+        
+        # Campo para ingresar el NSS del elemento al que se le registrará la huella
+        nss_input = st.text_input("Ingrese el NSS (Número de Seguridad Social) del Elemento:")
+        
+        if nss_input:
+            registrar_huella_webauthn(nss_input)
+        else:
+            st.info("Por favor, ingrese el NSS del elemento para habilitar el escaneo de huella.")
+
+# Llamada principal a la navegación (colocar donde corresponda en tu app.py)
+# gestionar_navegacion()
 
 # --- 👥 REGISTRO DE PERSONAL ---
 elif menu == "👥 Registro de Personal":
