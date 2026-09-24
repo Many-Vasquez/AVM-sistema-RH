@@ -853,25 +853,12 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
                 puntos = cargar_datos(
                     ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
                 )
-
-               nueva_fila = pd.DataFrame([{
-			   "NombrePunto": nombre_punto, 
-			   "Ubicacion": ubicacion, 
-			   "FechaAlta": str(datetime.now().date())
-			   }])
-               puntos = pd.concat([puntos, nueva_fila], ignore_index=True
-			   )
-						
-                guardar_datos(
-                    ARCHIVO_PUNTOS,
-                    puntos,
-                    ["NombrePunto", "Ubicacion", "FechaAlta"],
-                )
-                registrar_auditoria(
-                    st.session_state.usuario_actual,
-                    "ALTA PUNTO",
-                    f"Se creó el punto {nombre_punto}",
-                )
+				nueva_fila = pd.DataFrame([{"NombrePunto": nombre_punto, "Ubicacion": ubicacion, "FechaAlta": str(datetime.now().date())}]
+				puntos = pd.concat([puntos, nueva_fila], ignore_index=True)
+				guardar_datos(puntos, ARCHIVO_PUNTOS)
+				registrar_auditoria(st.session_state.usuario_actual, "ALTA PUNTO", f"Se creó el punto {nombre_punto}")
+        
+		st.success(f"Punto de trabajo '{nombre_punto}' registrado con éxito!")
                 st.success(f"¡Punto de trabajo '{nombre_punto}' registrado con éxito!")
             else:
                 st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
