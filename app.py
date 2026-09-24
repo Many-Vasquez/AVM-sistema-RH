@@ -643,7 +643,7 @@ def gestionar_navegacion():
 # gestionar_navegacion()
 
 # --- 👥 REGISTRO DE PERSONAL ---
-elif menu == "Registro de Personal":
+if menu == "Registro de Personal":
     st.header("📝 Registro y Gestión de Personal / Guardias")
     with st.form("form_empleado"):
         col1, col2 = st.columns(2)
