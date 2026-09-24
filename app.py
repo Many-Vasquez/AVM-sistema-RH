@@ -853,10 +853,13 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
                 puntos = cargar_datos(
                     ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
                 )
-                puntos.append({
-                    "NombrePunto": nombre_punto,
-                    "Ubicacion": ubicacion,
-                    "FechaAlta": datetime.now().strftime("%Y-%m-%d"),
+                nueva_fila = pd.DataFrame([{
+				"NombrePunto": nombre_punto, 
+				"Ubicacion": ubicacion, 
+				"FechaAlta": fecha_alta
+				}])
+
+puntos = pd.concat([puntos, nueva_fila], ignore_index=True),
                 })
                 guardar_datos(
                     ARCHIVO_PUNTOS,
