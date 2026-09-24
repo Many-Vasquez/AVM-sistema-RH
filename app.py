@@ -854,16 +854,10 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
                     ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
                 )
 
-                nueva_fila = pd.DataFrame([{
-				"NombrePunto": nombre_punto, 
-				"Ubicacion": ubicacion, 
-				"FechaAlta": fecha_alta
-				}])
-
-                puntos = pd.concat([puntos, nueva_fila], ignore_index=True),
-                guardar_datos(puntos, ARCHIVO_PUNTOS)
+nueva_fila = pd.DataFrame([{"NombrePunto": nombre_punto, "Ubicacion": ubicacion, "FechaAlta": fecha_alta}])
+        puntos = pd.concat([puntos, nueva_fila], ignore_index=True)
+        guardar_datos(puntos, ARCHIVO_PUNTOS)
         st.success("¡Punto de trabajo guardado exitosamente!")
-                ])
 				
                 guardar_datos(
                     ARCHIVO_PUNTOS,
