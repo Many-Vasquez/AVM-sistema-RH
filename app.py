@@ -863,7 +863,7 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
                 puntos = pd.concat([puntos, nueva_fila], ignore_index=True),
                 guardar_datos(puntos, ARCHIVO_PUNTOS)
 				st.success("¡Punto de trabajo guardado exitosamente!")
-                }])
+                ])
 				
                 guardar_datos(
                     ARCHIVO_PUNTOS,
