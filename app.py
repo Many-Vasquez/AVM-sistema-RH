@@ -18,6 +18,9 @@ st.set_page_config(
     layout="wide",
 )
 
+# --- CONSTANTES DE ARCHIVOS ---
+ARCHIVO_PUNTOS = "puntos_trabajo.csv"
+
 # --- FUNCIONES DE PERSISTENCIA Y CARGA DE DATOS ---
 def cargar_datos(nombre_archivo):
     if os.path.exists(nombre_archivo):
