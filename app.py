@@ -853,6 +853,7 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
                 puntos = cargar_datos(
                     ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
                 )
+
                 nueva_fila = pd.DataFrame([{
 				"NombrePunto": nombre_punto, 
 				"Ubicacion": ubicacion, 
