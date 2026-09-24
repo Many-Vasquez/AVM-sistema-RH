@@ -22,10 +22,21 @@ st.set_page_config(
 ARCHIVO_PUNTOS = "puntos_trabajo.csv"
 
 # --- FUNCIONES DE PERSISTENCIA Y CARGA DE DATOS ---
-def cargar_datos(nombre_archivo):
+def cargar_datos(nombre_archivo, columnas=None):
     if os.path.exists(nombre_archivo):
-        return pd.read_csv(nombre_archivo)
+        try:
+            df = pd.read_csv(nombre_archivo)
+            # Si se especifican columnas y el archivo está vacío, asegurarlas
+            if columnas and df.empty:
+                return pd.DataFrame(columns=columnas)
+            return df
+        except Exception:
+            if columnas:
+                return pd.DataFrame(columns=columnas)
+            return pd.DataFrame()
     else:
+        if columnas:
+            return pd.DataFrame(columns=columnas)
         return pd.DataFrame()
 
 def guardar_datos(df, nombre_archivo):
