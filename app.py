@@ -862,6 +862,7 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
 
 puntos = pd.concat([puntos, nueva_fila], ignore_index=True),
                 })
+				
                 guardar_datos(
                     ARCHIVO_PUNTOS,
                     puntos,
