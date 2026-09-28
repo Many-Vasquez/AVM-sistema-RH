@@ -843,6 +843,11 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
     st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
     st.markdown("---")
 
+with st.form("form_punto"):
+        nombre_punto = st.text_input("Nombre de la Instalación / Cliente")
+        ubicacion = st.text_input("Dirección o Sector")
+        btn_guardar_punto = st.form_submit_button("💾 Guardar Punto de Trabajo")
+		
 if btn_guardar_punto:
         if nombre_punto:
             puntos = cargar_datos(
