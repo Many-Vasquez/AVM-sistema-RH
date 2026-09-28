@@ -864,7 +864,8 @@ if btn_guardar_punto:
         else:
             st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
     st.markdown("### 📋 Puntos de Trabajo Actuales")
-    puntos_act = cargar_datos_puntos([])
+
+	puntos_act = cargar_datos_puntos([])
     if puntos_act:
         st.dataframe(puntos_act, use_container_width=True)
     else:
