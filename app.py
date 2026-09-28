@@ -868,7 +868,8 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
             st.success(f"Punto de trabajo '{nombre_punto}' registrado con éxito!")
         else:
             st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
-        st.markdown("### 📋 Puntos de Trabajo Actuales")
+        st.markdown("---")
+		st.markdown("### 📋 Puntos de Trabajo Actuales")
         puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
         if isinstance(puntos_act, list):
             puntos_act = pd.DataFrame(puntos_act)
