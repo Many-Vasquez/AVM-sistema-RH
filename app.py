@@ -864,7 +864,7 @@ if btn_guardar_punto:
         else:
             st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
         st.markdown("### 📋 Puntos de Trabajo Actuales")
-		puntos_act = cargar_datos_puntos([])
+        puntos_act = cargar_datos_puntos([])
 		if isinstance(puntos_act, list):
             puntos_act = pd.DataFrame(puntos_act)
         if not puntos_act.empty:
