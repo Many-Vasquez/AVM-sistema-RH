@@ -836,6 +836,55 @@ elif menu == "👆 Checador Biométrico de Huella":
     asistencias = cargar_datos_asistencias()
     if asistencias:
         st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
+		
+# --- 🏢 ADMINISTRACIÓN DE PUNTOS DE TRABAJO (CLIENTES) ---
+st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
+st.markdown("---")
+
+with st.form("form_punto"):
+    col1, col2 = st.columns(2)
+    with col1:
+        nombre_punto = st.text_input("Nombre del Punto / Cliente")
+    with col2:
+        ubicacion = st.text_input("Ubicación / Dirección")
+    
+    btn_guardar_punto = st.form_submit_button("Guardar Punto de Trabajo")
+
+if btn_guardar_punto:
+    if nombre_punto:
+        # Lógica para guardar tu registro (ajusta según tu función de guardado actual)
+        puntos_actuales = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+        
+        if isinstance(puntos_actuales, list):
+            nueva_fila = {
+                "NombrePunto": nombre_punto, 
+                "Ubicacion": ubicacion, 
+                "FechaAlta": str(datetime.now().date())
+            }
+            puntos_actuales.append(nueva_fila)
+            guardar_datos(ARCHIVO_PUNTOS, puntos_actuales)
+            st.success(f"¡Punto '{nombre_punto}' registrado con éxito!")
+            st.rerun()
+    else:
+        st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
+
+st.markdown("### 📋 Puntos de Trabajo Actuales")
+
+# Cargar y asegurar formato de DataFrame para visualización correcta
+puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+
+if isinstance(puntos_act, list):
+    if len(puntos_act) > 0:
+        puntos_df = pd.DataFrame(puntos_act)
+    else:
+        puntos_df = pd.DataFrame(columns=["NombrePunto", "Ubicacion", "FechaAlta"])
+else:
+    puntos_df = puntos_act
+
+if not puntos_df.empty:
+    st.dataframe(puntos_df, use_container_width=True)
+else:
+    st.info("Aún no hay puntos de trabajo dados de alta.")
 
 # --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
 elif menu == "📋 Catálogo Puntos de Trabajo":
