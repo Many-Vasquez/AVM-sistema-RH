@@ -837,55 +837,57 @@ elif menu == "👆 Checador Biométrico de Huella":
     if asistencias:
         st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
 		
-# --- 🏢 ADMINISTRACIÓN DE PUNTOS DE TRABAJO (CLIENTES) ---
-st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
-st.markdown("---")
+		# --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
+elif menu == "📋 Catálogo Puntos de Trabajo":
+    st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
+    st.markdown("---")
 
-with st.form("form_punto"):
-    col1, col2 = st.columns(2)
-    with col1:
-        nombre_punto = st.text_input("Nombre del Punto / Cliente")
-    with col2:
-        ubicacion = st.text_input("Ubicación / Dirección")
-    
-    btn_guardar_punto = st.form_submit_button("Guardar Punto de Trabajo")
+    # Formulario para registrar
+    with st.form("form_punto_nuevo"):
+        st.subheader("Registrar Nuevo Punto")
+        nombre_punto = st.text_input("Nombre de la Instalación / Cliente")
+        ubicacion = st.text_input("Dirección o Sector")
+        btn_guardar = st.form_submit_button("💾 Guardar Punto")
 
-if btn_guardar_punto:
-    if nombre_punto:
-        # Lógica para guardar tu registro (ajusta según tu función de guardado actual)
-        puntos_actuales = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
-        
-        if isinstance(puntos_actuales, list):
-            nueva_fila = {
-                "NombrePunto": nombre_punto, 
-                "Ubicacion": ubicacion, 
-                "FechaAlta": str(datetime.now().date())
-            }
-            puntos_actuales.append(nueva_fila)
-            guardar_datos(ARCHIVO_PUNTOS, puntos_actuales)
-            st.success(f"¡Punto '{nombre_punto}' registrado con éxito!")
+        if btn_guardar:
+            if nombre_punto:
+                df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+                if isinstance(df_puntos, list):
+                    df_puntos = pd.DataFrame(df_puntos)
+                
+                nueva_fila = pd.DataFrame([{
+                    "NombrePunto": nombre_punto, 
+                    "Ubicacion": ubicacion, 
+                    "FechaAlta": str(datetime.now().date())
+                }])
+                df_puntos = pd.concat([df_puntos, nueva_fila], ignore_index=True)
+                guardar_datos(df_puntos, ARCHIVO_PUNTOS)
+                registrar_auditoria(st.session_state.usuario_actual, "ALTA PUNTO", f"Se creó el punto {nombre_punto}")
+                st.success(f"Punto '{nombre_punto}' registrado con éxito!")
+                st.rerun()
+            else:
+                st.warning("⚠️ Ingresa el nombre del punto.")
+
+    st.markdown("---")
+    st.markdown("### 📋 Listado y Gestión de Puntos")
+
+    df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+    if isinstance(df_puntos, list):
+        df_puntos = pd.DataFrame(df_puntos)
+
+    if df_puntos is not None and not df_puntos.empty:
+        st.dataframe(df_puntos, use_container_width=True)
+
+        # Sección para eliminar
+        punto_a_borrar = st.selectbox("Selecciona un punto para eliminar:", df_puntos["NombrePunto"].tolist())
+        if st.button("🗑️ Eliminar Punto Seleccionado"):
+            df_puntos = df_puntos[df_puntos["NombrePunto"] != punto_a_borrar]
+            guardar_datos(df_puntos, ARCHIVO_PUNTOS)
+            registrar_auditoria(st.session_state.usuario_actual, "ELIMINAR PUNTO", f"Se eliminó el punto {punto_a_borrar}")
+            st.success(f"Punto '{punto_a_borrar}' eliminado correctamente.")
             st.rerun()
     else:
-        st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
-
-st.markdown("### 📋 Puntos de Trabajo Actuales")
-
-# Cargar y asegurar formato de DataFrame para visualización correcta
-puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
-
-      if isinstance(puntos_act, list):
-        if len(puntos_act) > 0:
-        puntos_df = pd.DataFrame(puntos_act)
-      else:
-        puntos_df = pd.DataFrame(columns=["NombrePunto", "Ubicacion", "FechaAlta"])
-      else:
-    puntos_df = puntos_act
-
-    if not puntos_df.empty:
-    st.dataframe(puntos_df, use_container_width=True)
-      else:
-        st.info("Aún no hay puntos de trabajo dados de alta.")
-	
+        st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
     st.markdown(
         "<h2 style='text-align: center; color: #d4af37;'>Control Operativo en Campo</h2>",
