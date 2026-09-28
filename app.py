@@ -839,45 +839,95 @@ elif menu == "👆 Checador Biométrico de Huella":
 
 # --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
 
-elif menu == "🏢 Catálogo Puntos de Trabajo":
+elif menu == "📋 Catálogo Puntos de Trabajo":
     st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
     st.markdown("---")
 
-    with st.form("form_punto"):
+    # 1. Formulario de Registro
+    with st.form("form_punto_nuevo"):
+        st.subheader("Registrar Nuevo Punto de Trabajo")
         nombre_punto = st.text_input("Nombre de la Instalación / Cliente")
         ubicacion = st.text_input("Dirección o Sector")
         btn_guardar_punto = st.form_submit_button("💾 Guardar Punto de Trabajo")
-		
-    if btn_guardar_punto:
-        if nombre_punto:
-            puntos = cargar_datos(
-                ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
-            )
-            nueva_fila = pd.DataFrame([{
-                "NombrePunto": nombre_punto, 
-                "Ubicacion": ubicacion, 
-                "FechaAlta": str(datetime.now().date())
-            }])
-            puntos = pd.concat([puntos, nueva_fila], ignore_index=True)
-            guardar_datos(puntos, ARCHIVO_PUNTOS)
-            registrar_auditoria(
-                st.session_state.usuario_actual, 
-                "ALTA PUNTO", 
-                f"Se creó el punto {nombre_punto}"
-            )
-            st.success(f"Punto de trabajo '{nombre_punto}' registrado con éxito!")
-        else:
-            st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
+
+        if btn_guardar_punto:
+            if nombre_punto:
+                puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+                if isinstance(puntos, list):
+                    puntos = pd.DataFrame(puntos)
+                
+                nueva_fila = pd.DataFrame([{
+                    "NombrePunto": nombre_punto, 
+                    "Ubicacion": ubicacion, 
+                    "FechaAlta": str(datetime.now().date())
+                }])
+                puntos = pd.concat([puntos, nueva_fila], ignore_index=True)
+                guardar_datos(puntos, ARCHIVO_PUNTOS)
+                registrar_auditoria(
+                    st.session_state.usuario_actual, 
+                    "ALTA PUNTO", 
+                    f"Se creó el punto {nombre_punto}"
+                )
+                st.success(f"Punto de trabajo '{nombre_punto}' registrado con éxito!")
+                st.rerun()
+            else:
+                st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
+
+    st.markdown("---")
+    st.markdown("### 📋 Puntos de Trabajo Actuales")
+
+    # 2. Cargar y mostrar datos existentes de forma fija
+    puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+    if isinstance(puntos_act, list):
+        puntos_act = pd.DataFrame(puntos_act)
+
+    if puntos_act is not None and not puntos_act.empty:
+        st.dataframe(puntos_act, use_container_width=True)
+
+        st.markdown("### 🛠️ Modificar o Eliminar Punto de Trabajo")
         
-        st.markdown("---")
-        st.markdown("### 📋 Puntos de Trabajo Actuales")
-        puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
-        if isinstance(puntos_act, list):
-            puntos_act = pd.DataFrame(puntos_act)
-        if puntos_act is not None and not puntos_act.empty:
-            st.dataframe(puntos_act, use_container_width=True)
-        else:
-            st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
+        # Seleccionar un punto existente de la lista para modificar o eliminar
+        lista_nombres = puntos_act["NombrePunto"].tolist()
+        punto_seleccionado = st.selectbox("Selecciona un punto de trabajo para administrar:", lista_nombres)
+
+        if punto_seleccionado:
+            # Filtrar los datos del punto seleccionado
+            fila_actual = puntos_act[puntos_act["NombrePunto"] == punto_seleccionado].iloc[0]
+            
+            with st.form("form_modificar_eliminar"):
+                nuevo_nombre = st.text_input("Modificar Nombre", value=str(fila_actual["NombrePunto"]))
+                nueva_ubicacion = st.text_input("Modificar Dirección o Sector", value=str(fila_actual["Ubicacion"]))
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    btn_modificar = st.form_submit_button("✏️ Actualizar Punto")
+                with col2:
+                    btn_eliminar = st.form_submit_button("🗑️ Eliminar Punto")
+
+                if btn_modificar:
+                    puntos_act.loc[puntos_act["NombrePunto"] == punto_seleccionado, "NombrePunto"] = nuevo_nombre
+                    puntos_act.loc[puntos_act["NombrePunto"] == nuevo_nombre, "Ubicacion"] = nueva_ubicacion
+                    guardar_datos(puntos_act, ARCHIVO_PUNTOS)
+                    registrar_auditoria(
+                        st.session_state.usuario_actual, 
+                        "MODIFICAR PUNTO", 
+                        f"Se actualizó el punto {punto_seleccionado} a {nuevo_nombre}"
+                    )
+                    st.success(f"Punto '{nuevo_nombre}' actualizado correctamente.")
+                    st.rerun()
+
+                if btn_eliminar:
+                    puntos_act = puntos_act[puntos_act["NombrePunto"] != punto_seleccionado]
+                    guardar_datos(puntos_act, ARCHIVO_PUNTOS)
+                    registrar_auditoria(
+                        st.session_state.usuario_actual, 
+                        "ELIMINAR PUNTO", 
+                        f"Se eliminó el punto {punto_seleccionado}"
+                    )
+                    st.success(f"Punto '{punto_seleccionado}' eliminado correctamente.")
+                    st.rerun()
+    else:
+        st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
 
 # --- 📱 TERMINAL MÓVIL (PUNTO DE TRABAJO) ---
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
