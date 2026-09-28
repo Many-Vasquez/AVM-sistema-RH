@@ -874,10 +874,10 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
         puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
         if isinstance(puntos_act, list):
             puntos_act = pd.DataFrame(puntos_act)
-        if not puntos_act.empty:
+        if puntos_act is not None and not puntos_act.empty:
             st.dataframe(puntos_act, use_container_width=True)
         else:
-            st.info("Aún no hay puntos de trabajo dados de alta.")
+            st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
 
 # --- 📱 TERMINAL MÓVIL (PUNTO DE TRABAJO) ---
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
