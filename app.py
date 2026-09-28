@@ -851,27 +851,27 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
 
                 if btn_guardar:
                     if nombre_punto:
-                        df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
-                        if isinstance(df_puntos, list):
-                            df_puntos = pd.DataFrame(df_puntos)
+                    df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+                    if isinstance(df_puntos, list):
+                    df_puntos = pd.DataFrame(df_puntos)
                         
-                        nueva_fila = pd.DataFrame([{
-                            "NombrePunto": nombre_punto, 
-                            "Ubicacion": ubicacion, 
-                            "FechaAlta": str(datetime.now().date())
+                    nueva_fila = pd.DataFrame([{
+                    "NombrePunto": nombre_punto, 
+                    "Ubicacion": ubicacion, 
+                    "FechaAlta": str(datetime.now().date())
                         }])
-                        df_puntos = pd.concat([df_puntos, nueva_fila], ignore_index=True)
-                        guardar_datos(df_puntos, ARCHIVO_PUNTOS)
-                        registrar_auditoria(st.session_state.usuario_actual, "ALTA PUNTO", f"Se creó el punto {nombre_punto}")
-                        st.success(f"Punto '{nombre_punto}' registrado con éxito!")
-                        st.rerun()
+                    df_puntos = pd.concat([df_puntos, nueva_fila], ignore_index=True)
+                    guardar_datos(df_puntos, ARCHIVO_PUNTOS)
+                    registrar_auditoria(st.session_state.usuario_actual, "ALTA PUNTO", f"Se creó el punto {nombre_punto}")
+                    st.success(f"Punto '{nombre_punto}' registrado con éxito!")
+                    st.rerun()
                     else:
                         st.warning("⚠️ Ingresa el nombre del punto.")
 
             st.markdown("---")
             st.markdown("### 📋 Listado y Gestión de Puntos")
 
-            df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+            df_puntos = cargar_datos(ARCHIVO_PUNTOS)
             if isinstance(df_puntos, list):
                 df_puntos = pd.DataFrame(df_puntos)
 
