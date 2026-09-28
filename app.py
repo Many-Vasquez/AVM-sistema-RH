@@ -862,10 +862,8 @@ if btn_guardar_punto:
             )
             st.success(f"Punto de trabajo '{nombre_punto}' registrado con éxito!")
         else:
-		
-		st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
-		
-		st.markdown("### 📋 Puntos de Trabajo Actuales")
+            st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
+			st.markdown("### 📋 Puntos de Trabajo Actuales")
 
 	puntos_act = cargar_datos_puntos([])
     if puntos_act:
