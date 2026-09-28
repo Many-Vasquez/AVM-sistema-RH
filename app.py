@@ -889,7 +889,7 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
             st.rerun()
     else:
         st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
-
+		
 # --- 📱 TERMINAL MÓVIL (PUNTO DE TRABAJO) ---
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
     st.markdown(
