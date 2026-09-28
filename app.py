@@ -837,7 +837,7 @@ elif menu == "👆 Checador Biométrico de Huella":
     if asistencias:
         st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
 		
-        # --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
+		# --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
 elif menu == "📋 Catálogo Puntos de Trabajo":
     st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
     st.markdown("---")
@@ -888,6 +888,7 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
             st.rerun()
     else:
         st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
+		
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
     st.markdown(
         "<h2 style='text-align: center; color: #d4af37;'>Control Operativo en Campo</h2>",
