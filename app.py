@@ -873,18 +873,18 @@ st.markdown("### 📋 Puntos de Trabajo Actuales")
 # Cargar y asegurar formato de DataFrame para visualización correcta
 puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
 
-if isinstance(puntos_act, list):
-    if len(puntos_act) > 0:
+      if isinstance(puntos_act, list):
+        if len(puntos_act) > 0:
         puntos_df = pd.DataFrame(puntos_act)
-    else:
+      else:
         puntos_df = pd.DataFrame(columns=["NombrePunto", "Ubicacion", "FechaAlta"])
-else:
+      else:
     puntos_df = puntos_act
 
-if not puntos_df.empty:
+    if not puntos_df.empty:
     st.dataframe(puntos_df, use_container_width=True)
-else:
-    st.info("Aún no hay puntos de trabajo dados de alta.")
+      else:
+        st.info("Aún no hay puntos de trabajo dados de alta.")
 	
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
     st.markdown(
