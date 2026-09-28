@@ -886,7 +886,6 @@ if not puntos_df.empty:
 else:
     st.info("Aún no hay puntos de trabajo dados de alta.")
 	
-# --- 📱 TERMINAL MÓVIL (PUNTO DE TRABAJO) ---
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
     st.markdown(
         "<h2 style='text-align: center; color: #d4af37;'>Control Operativo en Campo</h2>",
