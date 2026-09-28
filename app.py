@@ -843,26 +843,26 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
     st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
     st.markdown("---")
 
-    with st.form("form_punto"):
-        nombre_punto = st.text_input("Nombre de la Instalación / Cliente")
-        ubicacion = st.text_input("Dirección o Sector")
-        btn_guardar_punto = st.form_submit_button("💾 Guardar Punto de Trabajo")
-
-        if btn_guardar_punto:
-            if nombre_punto:
-                puntos = cargar_datos(
-                    ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
-                )
-				nueva_fila = pd.DataFrame([{"NombrePunto": nombre_punto, "Ubicacion": ubicacion, "FechaAlta": str(datetime.now().date())}]
-				puntos = pd.concat([puntos, nueva_fila], ignore_index=True)
-				guardar_datos(puntos, ARCHIVO_PUNTOS)
-				registrar_auditoria(st.session_state.usuario_actual, "ALTA PUNTO", f"Se creó el punto {nombre_punto}")
-        
-		st.success(f"Punto de trabajo '{nombre_punto}' registrado con éxito!")
-                st.success(f"¡Punto de trabajo '{nombre_punto}' registrado con éxito!")
-            else:
-                st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
-
+if btn_guardar_punto:
+        if nombre_punto:
+            puntos = cargar_datos(
+                ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"]
+            )
+            nueva_fila = pd.DataFrame([{
+                "NombrePunto": nombre_punto, 
+                "Ubicacion": ubicacion, 
+                "FechaAlta": str(datetime.now().date())
+            }])
+            puntos = pd.concat([puntos, nueva_fila], ignore_index=True)
+            guardar_datos(puntos, ARCHIVO_PUNTOS)
+            registrar_auditoria(
+                st.session_state.usuario_actual, 
+                "ALTA PUNTO", 
+                f"Se creó el punto {nombre_punto}"
+            )
+            st.success(f"Punto de trabajo '{nombre_punto}' registrado con éxito!")
+        else:
+            st.warning("⚠️ Debes ingresar al menos el nombre del punto.")
     st.markdown("### 📋 Puntos de Trabajo Actuales")
     puntos_act = cargar_datos_puntos([])
     if puntos_act:
