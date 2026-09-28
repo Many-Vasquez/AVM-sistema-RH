@@ -843,7 +843,7 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
     st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
     st.markdown("---")
 
-    # 1. Formulario de Registro
+    # Formulario de Registro
     with st.form("form_punto_nuevo"):
         st.subheader("Registrar Nuevo Punto de Trabajo")
         nombre_punto = st.text_input("Nombre de la Instalación / Cliente")
@@ -876,7 +876,7 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
     st.markdown("---")
     st.markdown("### 📋 Puntos de Trabajo Actuales")
 
-    # 2. Cargar y mostrar datos existentes de forma fija
+    # Cargar y mostrar datos existentes de forma fija
     puntos_act = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
     if isinstance(puntos_act, list):
         puntos_act = pd.DataFrame(puntos_act)
