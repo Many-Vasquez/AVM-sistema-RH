@@ -865,7 +865,7 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
                     registrar_auditoria(st.session_state.usuario_actual, "ALTA PUNTO", f"Se creó el punto {nombre_punto}")
                     st.success(f"Punto '{nombre_punto}' registrado con éxito!")
                     st.rerun()
-                    else:
+            else:
                         st.warning("⚠️ Ingresa el nombre del punto.")
 
             st.markdown("---")
