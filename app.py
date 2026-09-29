@@ -851,9 +851,9 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
 
                 if btn_guardar:
                     if nombre_punto:
-                    df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+                     df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
                     if isinstance(df_puntos, list):
-                    df_puntos = pd.DataFrame(df_puntos)
+                     df_puntos = pd.DataFrame(df_puntos)
                         
                     nueva_fila = pd.DataFrame([{
                     "NombrePunto": nombre_punto, 
