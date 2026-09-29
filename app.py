@@ -870,26 +870,26 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
                 else:
                         st.warning("⚠️ Ingresa el nombre del punto.")
 
-st.markdown("---")
-st.markdown("### 📋 Listado y Gestión de Puntos")
+    st.markdown("---")
+    st.markdown("### 📋 Listado y Gestión de Puntos")
 
-            df_puntos = cargar_datos(ARCHIVO_PUNTOS)
-            if isinstance(df_puntos, list):
-                df_puntos = pd.DataFrame(df_puntos)
+    df_puntos = cargar_datos(ARCHIVO_PUNTOS)
+    if isinstance(df_puntos, list):
+        df_puntos = pd.DataFrame(df_puntos)
 
-            if df_puntos is not None and not df_puntos.empty:
-                st.dataframe(df_puntos, use_container_width=True)
+    if df_puntos is not None and not df_puntos.empty:
+        st.dataframe(df_puntos, use_container_width=True)
 
-                # Sección para eliminar
-                punto_a_borrar = st.selectbox("Selecciona un punto para eliminar:", df_puntos["NombrePunto"].tolist())
-                if st.button("🗑️ Eliminar Punto Seleccionado"):
-                    df_puntos = df_puntos[df_puntos["NombrePunto"] != punto_a_borrar]
-                    guardar_datos(df_puntos, ARCHIVO_PUNTOS)
-                    registrar_auditoria(st.session_state.usuario_actual, "ELIMINAR PUNTO", f"Se eliminó el punto {punto_a_borrar}")
-                    st.success(f"Punto '{punto_a_borrar}' eliminado correctamente.")
-                    st.rerun()
-            else:
-                st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
+        # Sección para eliminar
+        punto_a_borrar = st.selectbox("Selecciona un punto para eliminar:", df_puntos["NombrePunto"].tolist())
+        if st.button("🗑️ Eliminar Punto Seleccionado"):
+            df_puntos = df_puntos[df_puntos["NombrePunto"] != punto_a_borrar]
+            guardar_datos(df_puntos, ARCHIVO_PUNTOS)
+            registrar_auditoria(st.session_state.usuario_actual, "ELIMINAR PUNTO", f"Se eliminó el punto {punto_a_borrar}")
+            st.success(f"Punto '{punto_a_borrar}' eliminado correctamente.")
+            st.rerun()
+    else:
+        st.info("ℹ️ Aún no hay puntos de trabajo dados de alta.")
 		
 elif menu == "📱 Terminal Móvil (Punto de Trabajo)":
     st.markdown(
