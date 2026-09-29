@@ -841,7 +841,14 @@ elif menu == "👆 Checador Biométrico de Huella":
 elif menu == "🏢 Catálogo Puntos de Trabajo":
     st.header("🏢 Administración de Puntos de Trabajo (Clientes)")
     st.subheader("Catálogo de Puntos de Trabajo")
-    st.dataframe(df_puntos)
+
+            # CARGAR PRIMERO LA VARIABLE ANTES DE USARLA
+            df_puntos = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+            if isinstance(df_puntos, list):
+                df_puntos = pd.DataFrame(df_puntos)
+
+            # MOSTRAR EL DATAFRAME YA CARGADO
+            st.dataframe(df_puntos)
 
             # Formulario para registrar
     with st.form("form_punto_nuevo"):
