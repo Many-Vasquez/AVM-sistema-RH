@@ -670,7 +670,7 @@ def gestionar_navegacion():
 if menu == "👥 Registro de Personal":
     st.header("📝 Registro y Gestión de Personal / Guardias")
     
-	with st.form("form_empleado"):
+    with st.form("form_empleado"):
         col1, col2 = st.columns(2)
         with col1:
             nombre = st.text_input("Nombre Completo del Trabajador")
