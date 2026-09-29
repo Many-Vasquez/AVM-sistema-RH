@@ -841,6 +841,8 @@ elif menu == "👆 Checador Biométrico de Huella":
 elif menu == "📋 Catálogo Puntos de Trabajo":
             st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
             st.markdown("---")
+			st.subheader("Catálogo de Puntos de Trabajo")
+            st.dataframe(df_puntos)
 
             # Formulario para registrar
             with st.form("form_punto_nuevo"):
