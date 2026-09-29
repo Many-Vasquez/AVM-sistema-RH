@@ -271,6 +271,7 @@ opciones_menu = [
     "📊 Módulo Comercial (Cotizador)",
     "👥 Registro de Personal",
     "📥 Reporte de Personal (Excel)",
+	"📱 TERMINAL BIOMÉTRICA MÓVIL",
 	"🏢 Catálogo Puntos de Trabajo",
 	"📱 Terminal Móvil (Punto de Trabajo)",
     "👆 Checador Biométrico de Huella",
@@ -837,6 +838,85 @@ elif menu == "👆 Checador Biométrico de Huella":
     asistencias = cargar_datos_asistencias()
     if asistencias:
         st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
+
+import streamlit.components.v1 as components
+
+# --- 📱 TERMINAL BIOMÉTRICA MÓVIL ---
+if menu == "📱 Terminal Móvil (Punto de Trabajo)":
+    st.header("📱 Terminal Móvil de Asistencia Biométrica")
+    st.markdown("---")
+    
+    # Seleccionar el punto de trabajo actual
+    punto_actual = st.selectbox("Seleccione el Punto de Trabajo / Instalación", ["Punto Norte - Parque Industrial", "Punto Centro - CEDIS", "Punto Sur - Oficinas"])
+    
+    # Seleccionar el elemento / guardia
+    guardia_seleccionado = st.selectbox("Seleccionar Guardia en Turno", ["JUAN PÉREZ LÓPEZ", "CARLOS MENDOZA RUIZ", "MARÍA SÁNCHEZ GÓMEZ"])
+    
+    tipo_movimiento = st.radio("Tipo de Marcaje", ["Entrada de Turno", "Salida de Turno"], horizontal=True)
+    
+    st.markdown("### Validación de Identidad por Biometría del Dispositivo")
+    st.info("ℹ️ Al hacer clic en el botón, el celular solicitará su huella dactilar o reconocimiento facial mediante el sensor nativo del equipo.")
+
+    # Código HTML/JS para invocar la autenticación biométrica del celular (WebAuthn / Credential Management API)
+    biometric_html = """
+    <div style="text-align: center; padding: 20px;">
+        <button id="bioBtn" onclick="verificarBiometria()" style="background-color: #FFD700; color: #000; font-size: 18px; font-weight: bold; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            👉 ESCANEAR HUELLA / BIOMETRÍA MÓVIL
+        </button>
+        <p id="statusMsg" style="margin-top: 15px; font-size: 14px; color: #aaa;"></p>
+    </div>
+
+    <script>
+    async function verificarBiometria() {
+        const status = document.getElementById("statusMsg");
+        status.innerText = "Verificando sensor biométrico del dispositivo...";
+        
+        try {
+            // Comprobamos si el navegador soporta autenticación biométrica
+            if (!window.PublicKeyCredential) {
+                status.innerText = "❌ Este navegador no soporta autenticación biométrica.";
+                return;
+            }
+
+            // Solicitud de credencial biométrica simulada por hardware del dispositivo
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+            
+            const publicKey = {
+                challenge: challenge,
+                rp: { name: "AVM Seguridad Privada" },
+                user: {
+                    id: Uint8Array.from("AVMGuardia", c => c.charCodeAt(0)),
+                    name: "guardia@avm.com",
+                    displayName: "Guardia AVM"
+                },
+                pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                timeout: 60000,
+                authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                attestation: "none"
+            };
+
+            const credential = await navigator.credentials.create({ publicKey });
+            
+            if (credential) {
+                status.innerText = "✅ ¡Huella verificada con éxito por el dispositivo!";
+                // Aquí se puede notificar a Streamlit que la autenticación fue exitosa
+            }
+        } catch (error) {
+            status.innerText = "⚠️ Validación cancelada o no disponible en este dispositivo.";
+            console.error(error);
+        }
+    }
+    </script>
+    """
+    
+    # Renderizar el componente interactivo de biometría móvil
+    components.html(biometric_html, height=160)
+    
+    if st.button("💾 Registrar Asistencia en Base de Datos"):
+        # Registro en el sistema
+        registrar_auditoria(st.session_state.get("usuario_actual", "ADMIN"), "ASISTENCIA BIOMÉTRICA", f"Guardia {guardia_seleccionado} registró {tipo_movimiento} en {punto_actual}")
+        st.success(f"¡Asistencia de {tipo_movimiento} guardada correctamente para {guardia_seleccionado}!")
 
 # --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
 elif menu == "🏢 Catálogo Puntos de Trabajo":
