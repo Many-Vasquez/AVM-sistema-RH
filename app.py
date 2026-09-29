@@ -848,7 +848,7 @@ elif menu == "🏢 Catálogo Puntos de Trabajo":
                 df_puntos = pd.DataFrame(df_puntos)
 
             # MOSTRAR EL DATAFRAME YA CARGADO
-            st.dataframe(df_puntos)
+    st.dataframe(df_puntos)
 
             # Formulario para registrar
     with st.form("form_punto_nuevo"):
