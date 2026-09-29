@@ -870,8 +870,8 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
                 else:
                         st.warning("⚠️ Ingresa el nombre del punto.")
 
-            st.markdown("---")
-            st.markdown("### 📋 Listado y Gestión de Puntos")
+st.markdown("---")
+st.markdown("### 📋 Listado y Gestión de Puntos")
 
             df_puntos = cargar_datos(ARCHIVO_PUNTOS)
             if isinstance(df_puntos, list):
