@@ -842,7 +842,7 @@ elif menu == "👆 Checador Biométrico de Huella":
 import streamlit.components.v1 as components
 
 # --- 📱 TERMINAL BIOMÉTRICA MÓVIL ---
-if menu == "📱 Terminal Móvil (Punto de Trabajo)":
+if menu == "📱 TERMINAL BIOMÉTRICA MÓVIL":
     st.header("📱 Terminal Móvil de Asistencia Biométrica")
     st.markdown("---")
     
