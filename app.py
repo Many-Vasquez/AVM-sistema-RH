@@ -846,18 +846,34 @@ if menu == "📱 TERMINAL BIOMÉTRICA MÓVIL":
     st.header("📱 Terminal Móvil de Asistencia Biométrica")
     st.markdown("---")
     
-    # Seleccionar el punto de trabajo actual
-    punto_actual = st.selectbox("Seleccione el Punto de Trabajo / Instalación", ["Punto Norte - Parque Industrial", "Punto Centro - CEDIS", "Punto Sur - Oficinas"])
+    # 1. Cargar Puntos de Trabajo reales desde la base de datos
+    df_puntos_term = cargar_datos(ARCHIVO_PUNTOS, ["NombrePunto", "Ubicacion", "FechaAlta"])
+    if isinstance(df_puntos_term, list):
+        df_puntos_term = pd.DataFrame(df_puntos_term)
     
-    # Seleccionar el elemento / guardia
-    guardia_seleccionado = st.selectbox("Seleccionar Guardia en Turno", ["JUAN PÉREZ LÓPEZ", "CARLOS MENDOZA RUIZ", "MARÍA SÁNCHEZ GÓMEZ"])
+    lista_puntos = df_puntos_term["NombrePunto"].tolist() if not df_puntos_term.empty and "NombrePunto" in df_puntos_term.columns else ["Sin Puntos Registrados"]
+    punto_actual = st.selectbox("Seleccione el Punto de Trabajo / Instalación", lista_puntos)
+    
+    # 2. Cargar Personal real desde la base de datos
+    # (Asumiendo que guardas el personal en un archivo o variable común, por ejemplo ARCHIVO_PERSONAL o similar)
+    # Reemplaza 'ARCHIVO_PERSONAL' por el nombre de la constante que uses para tu personal si difiere.
+    df_personal_term = cargar_datos("personal.csv", ["Nombre Completo del Trabajador", "CURP", "NSS"])
+    if isinstance(df_personal_term, list):
+        df_personal_term = pd.DataFrame(df_personal_term)
+        
+    if not df_personal_term.empty and "Nombre Completo del Trabajador" in df_personal_term.columns:
+        lista_guardias = df_personal_term["Nombre Completo del Trabajador"].tolist()
+    else:
+        # Fallback si aún no hay personal cargado
+        lista_guardias = ["JOSE MANUEL VASQUEZ MOYEDA"]
+        
+    guardia_seleccionado = st.selectbox("Seleccionar Guardia en Turno", lista_guardias)
     
     tipo_movimiento = st.radio("Tipo de Marcaje", ["Entrada de Turno", "Salida de Turno"], horizontal=True)
     
     st.markdown("### Validación de Identidad por Biometría del Dispositivo")
     st.info("ℹ️ Al hacer clic en el botón, el celular solicitará su huella dactilar o reconocimiento facial mediante el sensor nativo del equipo.")
 
-    # Código HTML/JS para invocar la autenticación biométrica del celular (WebAuthn / Credential Management API)
     biometric_html = """
     <div style="text-align: center; padding: 20px;">
         <button id="bioBtn" onclick="verificarBiometria()" style="background-color: #FFD700; color: #000; font-size: 18px; font-weight: bold; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
@@ -872,13 +888,11 @@ if menu == "📱 TERMINAL BIOMÉTRICA MÓVIL":
         status.innerText = "Verificando sensor biométrico del dispositivo...";
         
         try {
-            // Comprobamos si el navegador soporta autenticación biométrica
             if (!window.PublicKeyCredential) {
                 status.innerText = "❌ Este navegador no soporta autenticación biométrica.";
                 return;
             }
 
-            // Solicitud de credencial biométrica simulada por hardware del dispositivo
             const challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
             
@@ -900,7 +914,6 @@ if menu == "📱 TERMINAL BIOMÉTRICA MÓVIL":
             
             if (credential) {
                 status.innerText = "✅ ¡Huella verificada con éxito por el dispositivo!";
-                // Aquí se puede notificar a Streamlit que la autenticación fue exitosa
             }
         } catch (error) {
             status.innerText = "⚠️ Validación cancelada o no disponible en este dispositivo.";
@@ -910,13 +923,12 @@ if menu == "📱 TERMINAL BIOMÉTRICA MÓVIL":
     </script>
     """
     
-    # Renderizar el componente interactivo de biometría móvil
     components.html(biometric_html, height=160)
     
     if st.button("💾 Registrar Asistencia en Base de Datos"):
-        # Registro en el sistema
+        # Guardar en tus métricas de asistencia o archivo de control
         registrar_auditoria(st.session_state.get("usuario_actual", "ADMIN"), "ASISTENCIA BIOMÉTRICA", f"Guardia {guardia_seleccionado} registró {tipo_movimiento} en {punto_actual}")
-        st.success(f"¡Asistencia de {tipo_movimiento} guardada correctamente para {guardia_seleccionado}!")
+        st.success(f"¡Asistencia de {tipo_movimiento} guardada correctamente para {guardia_seleccionado} en {punto_actual}!")
 
 # --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
 elif menu == "🏢 Catálogo Puntos de Trabajo":
