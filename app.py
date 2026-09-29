@@ -838,8 +838,8 @@ elif menu == "👆 Checador Biométrico de Huella":
         st.dataframe(pd.DataFrame(asistencias), use_container_width=True)
 
 # --- 🏢 CATÁLOGO PUNTOS DE TRABAJO ---
-elif menu == "📋 Catálogo Puntos de Trabajo":
-    st.title("🏢 Administración de Puntos de Trabajo (Clientes)")
+elif menu == "🏢 Catálogo Puntos de Trabajo":
+    st.header("🏢 Administración de Puntos de Trabajo (Clientes)")
     st.subheader("Catálogo de Puntos de Trabajo")
     st.dataframe(df_puntos)
 
