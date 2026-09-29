@@ -845,7 +845,7 @@ elif menu == "📋 Catálogo Puntos de Trabajo":
     st.dataframe(df_puntos)
 
             # Formulario para registrar
-            with st.form("form_punto_nuevo"):
+    with st.form("form_punto_nuevo"):
                 st.subheader("Registrar Nuevo Punto")
                 nombre_punto = st.text_input("Nombre de la Instalación / Cliente")
                 ubicacion = st.text_input("Dirección o Sector")
